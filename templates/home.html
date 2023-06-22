@@ -14,10 +14,9 @@
         <h2>Reviews:</h2>
         <ul>
         {% for review in reviews %}
-            <li>Rating: {{ review.rating }}</li>
-            <li>Comment: {{ review.comment }}</li>
-            <li>Author: {{ review.author_name }}</li>
-            <li>Time: {{ review.time_description }}</li>
+            <li>Rating: {{ review[1] }}</li>
+            <li>Comment: {{ review[2] }}</li>
+            <li>Author: {{ review[0] }}</li>
             <br>
         {% endfor %}
         </ul>

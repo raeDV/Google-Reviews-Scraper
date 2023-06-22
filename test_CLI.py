@@ -26,6 +26,9 @@ def get_google_reviews(place):
 
     if 'candidates' in data and len(data['candidates']) > 0:
         place_id = data['candidates'][0]['place_id']
+        print("Place ID: ", place_id)  # Moved this line up
+        place_url = f'https://www.google.com/maps/place/?q=place_id:{place_id}'
+        print("Place url: ", place_url)  # Moved this line up
         return fetch_reviews(place_id)
     else:
         return []
@@ -92,36 +95,40 @@ def format_filename(place):
 
 
 @click.command()
-@click.option('--place', prompt='Enter a place name', help='The business or location name to scrape reviews')
-def scrape_reviews(place):
-    reviews = get_google_reviews(place)
+def scrape_reviews():
+    while True:
+        place = click.prompt('Enter a place name (or type "quit" to exit)', default='')
+        if place.lower() == 'quit':
+            break
 
-    if reviews:
-        # Sort reviews by ID in ascending order
-        sorted_reviews = sorted(reviews, key=lambda x: x['id'])
+        reviews = get_google_reviews(place)
 
-        # Generate CSV data
-        csv_data = 'id,rating,comment,author_name,date\n'
-        for review in sorted_reviews:
-            csv_data += f"{review['id']},{review['rating']},{review['comment']},{review['author_name']},{review['date']}\n"
+        if reviews:
+            # Sort reviews by ID in ascending order
+            sorted_reviews = sorted(reviews, key=lambda x: x['id'])
 
-        # Format the filename
-        filename = format_filename(place)
+            # Generate CSV data
+            csv_data = 'id,rating,comment,author_name,date\n'
+            for review in sorted_reviews:
+                csv_data += f"{review['id']},{review['rating']},{review['comment']},{review['author_name']},{review['date']}\n"
 
-        # Specify the folder path
-        folder = 'output_data'
+            # Format the filename
+            filename = format_filename(place)
 
-        # Create the folder if it doesn't exist
-        os.makedirs(folder, exist_ok=True)
+            # Specify the folder path
+            folder = 'output_data'
 
-        # Save reviews to a CSV file in the specified folder
-        full_path = os.path.join(folder, filename)
-        with open(full_path, 'w', encoding='utf-8', newline='') as file:
-            file.write(csv_data)
+            # Create the folder if it doesn't exist
+            os.makedirs(folder, exist_ok=True)
 
-        print('Reviews have been successfully scraped and saved to', full_path)
-    else:
-        print('No reviews found for the specified place.')
+            # Save reviews to a CSV file in the specified folder
+            full_path = os.path.join(folder, filename)
+            with open(full_path, 'w', encoding='utf-8', newline='') as file:
+                file.write(csv_data)
+
+            print('Reviews have been successfully scraped, you could check it at', full_path, 'after you exit')
+        else:
+            print('No reviews found for the specified place.')
 
 
 if __name__ == '__main__':

@@ -6,22 +6,8 @@ app = Flask(__name__)
 
 
 def calculate_time_description(time_seconds):
-    current_time = datetime.datetime.now()
     review_time = datetime.datetime.fromtimestamp(time_seconds)
-    time_diff = current_time - review_time
-    days = time_diff.days
-    if days > 0:
-        return f"{days} days ago"
-    else:
-        seconds = time_diff.seconds
-        hours = seconds // 3600
-        minutes = (seconds // 60) % 60
-        if hours > 0:
-            return f"{hours} hours ago"
-        elif minutes > 0:
-            return f"{minutes} minutes ago"
-        else:
-            return "Just now"
+    return review_time.strftime('%Y-%m-%d')
 
 
 def get_google_reviews(place):
@@ -77,13 +63,16 @@ def fetch_reviews(place_id):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    reviews = []
+    place = ''
+    no_reviews = False
     if request.method == 'POST':
         place = request.form.get('place')
         if place:
             reviews = get_google_reviews(place)
-            return render_template('index.html', reviews=reviews, place=place)
-
-    return render_template('index.html')
+            if not reviews:
+                no_reviews = True
+    return render_template('index.html', reviews=reviews, place=place, no_reviews=no_reviews)
 
 
 if __name__ == '__main__':
