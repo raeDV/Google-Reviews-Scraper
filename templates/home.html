@@ -1,0 +1,40 @@
+{% extends "template.html" %}
+{% block title %}{{ super() }} - Home{% endblock %}
+{% block content %}
+
+<h1>Google Reviews Scraper</h1>
+    <form method="POST">
+        <input type="text" name="place" placeholder="Enter a place name">
+        <button type="submit">Scrape Reviews</button>
+    </form>
+
+    {% if reviews %}
+        <h2>Reviews for {{ place }}:</h2>
+        <div class="result">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rating</th>
+                        <th>Comment</th>
+                        <th>Author</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for review in reviews %}
+                    <tr>
+                        <td>{{ review.rating }}</td>
+                        <td width="500px">{{ review.comment }}</td>
+                        <td>{{ review.author_name }}</td>
+                        <td>{{ review.time_description }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+            <button type="submit">Save Reviews</button>
+
+    {% elif no_reviews %}
+        <p>We found no reviews for this place, please check your input and try again.</p>
+    {% endif %}
+{% endblock %}
