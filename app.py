@@ -137,6 +137,7 @@ def save_reviews_to_database(user_id, place, reviews):
 @login_required
 def home():
     reviews = []
+    no_reviews = False
     place = ''
     if request.method == 'POST':
         place = request.form.get('place')
@@ -159,14 +160,9 @@ def login():
         # passwords are kept in hashed form, using the bcrypt algorithm
         if user and bcrypt.checkpw(form.password.data.encode(), user.password.encode()):
             login_user(user)
-            # flash('Logged in successfully.')
+            flash('Logged in successfully.')
 
-            # check if the next page is set in the session by the @login_required decorator
-            # if not set, it will default to '/'
-            next_page = session.get('next', '/')
-            # reset the next page to default '/'
-            session['next'] = '/'
-            return redirect(next_page)
+            return redirect(url_for('home'))
         else:
             flash('Incorrect username/password!')
     return render_template('login.html', form=form)
@@ -177,7 +173,7 @@ def login():
 def logout():
     logout_user()
     # flash(str(session))
-    return redirect('/')
+    return redirect('/login')
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -219,8 +215,6 @@ def account():
             flash('Incorrect old password. Please try again.')
 
     return render_template('account.html', form=form)
-
-
 
 
 if __name__ == '__main__':

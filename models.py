@@ -14,6 +14,7 @@ class DBUser(db.Model):
     def __repr__(self):
         return "<DBUser {}: {} {} >".format(self.username, self.email, self.phone)
 
+
 class Reviews(db.Model):
     __tablename__ = 'reviews'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
