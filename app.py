@@ -6,6 +6,7 @@ import requests
 from flask import Flask, render_template, request
 from flask import redirect, flash, url_for
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from sqlalchemy.exc import NoResultFound
 
 from forms import LoginForm, RegisterForm, AccountForm
 from models import DBUser, db, Reviews
@@ -34,11 +35,12 @@ class User(UserMixin):
 @login_manager.user_loader
 def load_user(user_id):
     user = find_user(user_id)
-    # user could be None
     if user:
-        # if not None, hide the password by setting it to None
-        user.password = None
+        db_user = DBUser.query.filter_by(username=user_id).first()
+        user.password = db_user.password  # Update the password attribute with the hashed password from the database
     return user
+
+
 
 
 def find_user(username):
@@ -207,17 +209,22 @@ def register():
 @login_required
 def account():
     form = AccountForm(obj=current_user)
+    form.username.data = current_user.id  # Set the current username in the form
 
     if form.validate_on_submit():
         if bcrypt.checkpw(form.oldPassword.data.encode(), current_user.password.encode()):
-            current_user.username = form.username.data
-            current_user.email = form.email.data
-            current_user.phone = form.phone.data
-            password_hash = bcrypt.hashpw(form.newPassword.data.encode(), bcrypt.gensalt())
-            current_user.password = password_hash.decode()
-            db.session.commit()  # Save the changes to the database
-            flash('Your account has been updated!')
-            return redirect(url_for('home'))
+            try:
+                user = DBUser.query.filter_by(username=current_user.id).one()
+                user.email = form.email.data
+                user.phone = form.phone.data
+                if form.newPassword.data:
+                    password_hash = bcrypt.hashpw(form.newPassword.data.encode(), bcrypt.gensalt())
+                    user.password = password_hash.decode()
+                db.session.commit()  # Save the changes to the database
+                flash('Your account has been updated!')
+                return redirect(url_for('home'))
+            except NoResultFound:
+                flash('User not found in the database.')
         else:
             flash('Incorrect old password. Please try again.')
 

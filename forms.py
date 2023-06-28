@@ -28,7 +28,7 @@ class RegisterForm(FlaskForm):
 
 
 class AccountForm(FlaskForm):
-    username = StringField('Username', validators=[InputRequired()])
+    username = StringField('Username', render_kw={'readonly': True})
     email = EmailField('Email', validators=[InputRequired()])
     phone = StringField('Phone number', validators=[InputRequired()])
     oldPassword = PasswordField('Old Password', validators=[InputRequired()])

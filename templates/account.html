@@ -2,7 +2,9 @@
 {% block title %}{{ super() }} - {{ current_user.id }}{% endblock %}
 
 {% block content %}
-
+{% for message in get_flashed_messages() %}
+        {{ message }}<br/>
+    {% endfor %}
 <h1>Edit account information</h1>
 <div class="formcenter">
     <form action="/account" method="post">
