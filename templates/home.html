@@ -3,7 +3,7 @@
 {% block content %}
 
 {% for message in get_flashed_messages() %}
-        {{ message }}<br/>
+        <br/>{{ message }}<br/>
     {% endfor %}
 <form method="POST">
     <input type="text" name="place" placeholder="Enter a place name">

@@ -6,7 +6,7 @@ import requests
 from flask import Flask, render_template, request
 from flask import redirect, flash, url_for
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, IntegrityError
 
 from forms import LoginForm, RegisterForm, AccountForm
 from models import DBUser, db, Reviews
@@ -121,17 +121,25 @@ def fetch_reviews(place_id, page_token=None):
 
 
 def save_reviews_to_database(user_id, place, reviews):
+    existing_reviews = Reviews.query.filter_by(user_id=user_id, company=place).all()
+
     for review in reviews:
-        db_review = Reviews(
-            user_id=user_id,
-            company=place,
-            rating=review['rating'],
-            comments=review['comment'],
-            author=review['author_name'],
-            date=review['time_description']
-        )
-        db_review.save_to_db()
-        db.session.commit()
+        # Check if the review already exists in the database
+        if any(existing_review.comments == review['comment']
+               for existing_review in existing_reviews):
+            flash('Review already exists! Review not saved!')
+        else:
+            db_review = Reviews(
+                user_id=user_id,
+                company=place,
+                rating=review['rating'],
+                comments=review['comment'],
+                author=review['author_name'],
+                date=review['time_description']
+            )
+            db.session.add(db_review)
+            flash('Reviews saved successfully.')
+    db.session.commit()
 
 
 @app.route('/save-reviews', methods=['POST'])
@@ -142,7 +150,6 @@ def save_reviews():
         place = request.form.get('place')  # Get the place name from the form
         reviews = get_google_reviews(place)  # Scrape reviews for the place
         save_reviews_to_database(user_id, place, reviews)  # Save the reviews to the database
-        flash('Reviews saved successfully.')
     return redirect(url_for('home'))
 
 
