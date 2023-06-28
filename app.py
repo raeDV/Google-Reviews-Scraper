@@ -37,10 +37,8 @@ def load_user(user_id):
     user = find_user(user_id)
     if user:
         db_user = DBUser.query.filter_by(username=user_id).first()
-        user.password = db_user.password  # Update the password attribute with the hashed password from the database
+        user.password = db_user.password
     return user
-
-
 
 
 def find_user(username):
@@ -83,7 +81,7 @@ def fetch_all_reviews(place_id):
         reviews.extend(review_data)
         if page_token is None:
             break
-        time.sleep(2)  # Add a delay of 2 seconds before making the next request
+        time.sleep(2)  # Add delay before making the next request
 
     return reviews
 
