@@ -4,7 +4,7 @@ import time
 import bcrypt
 import requests
 from flask import Flask, render_template, request
-from flask import session, redirect, flash, url_for
+from flask import redirect, flash, url_for
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 
 from forms import LoginForm, RegisterForm, AccountForm
@@ -131,24 +131,31 @@ def save_reviews_to_database(user_id, place, reviews):
             date=review['time_description']
         )
         db_review.save_to_db()
+        db.session.commit()
+
+
+@app.route('/save-reviews', methods=['POST'])
+@login_required
+def save_reviews():
+    if request.method == 'POST':
+        user_id = current_user.id  # Get the current user's ID
+        place = request.form.get('place')  # Get the place name from the form
+        reviews = get_google_reviews(place)  # Scrape reviews for the place
+        save_reviews_to_database(user_id, place, reviews)  # Save the reviews to the database
+        flash('Reviews saved successfully.')
+    return redirect(url_for('home'))
 
 
 @app.route('/', methods=['GET', 'POST'])
 @login_required
 def home():
     reviews = []
-    no_reviews = False
     place = ''
     if request.method == 'POST':
         place = request.form.get('place')
         if place:
             reviews = get_google_reviews(place)
-            if reviews:
-                # Save reviews to the database
-                save_reviews_to_database(current_user.id, place, reviews)
-            else:
-                no_reviews = True
-    return render_template('home.html', reviews=reviews, place=place, no_reviews=no_reviews)
+    return render_template('home.html', reviews=reviews, place=place)
 
 
 @app.route('/login', methods=['GET', 'POST'])
