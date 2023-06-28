@@ -35,7 +35,7 @@
         </table>
     </div>
     <div>
-        <form method="POST" action="{{ url_for('save_reviews') }}">
+        <form style="margin: 20px" method="POST" action="{{ url_for('save_reviews') }}">
             <input type="hidden" name="place" value="{{ place }}">
             <button type="submit" name="save_reviews">Save Reviews</button>
         </form>
