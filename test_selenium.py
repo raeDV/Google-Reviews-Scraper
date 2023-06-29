@@ -6,8 +6,8 @@ from selenium.webdriver.firefox.options import Options
 firefox_options = Options()
 # firefox_options.add_argument("--headless")
 
-# Set path to geckodriver as per your configuration
-webdriver_service = Service(r'C:\Users\RAE\chromedriver_win32\chromedriver.exe')
+# Set path to geckodriver as per your configuration, change it to your path accordingly
+webdriver_service = Service(r'D:\My Files\download\geckodriver.exe')
 
 # Choose Firefox Browser
 driver = webdriver.Firefox(service=webdriver_service, options=firefox_options)
