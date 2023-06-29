@@ -107,16 +107,17 @@ def get_place_id(place_name):
         place_result = gmaps.places(place_name)
         if place_result and 'results' in place_result and place_result['results']:
             place_id = place_result['results'][0]['place_id']
-            print("Place Name: ", place_name)
+            official_place_name = place_result['results'][0]['name']  # Get the official name
+            print("Place Name: ", official_place_name)
             print("Place ID: ", place_id)
-            return place_id
+            return place_id, official_place_name
         else:
             print(f"No place found for: {place_name}")
-            return None
+            return None, None
     except Exception as e:
         print(f"Error occurred while fetching place_id for: {place_name}")
         print(f"Exception: {e}")
-        return None
+        return None, None
 
 
 def scrape_all_reviews(driver, total_reviews):
@@ -294,7 +295,7 @@ def home():
 
     if request.method == 'POST':
         place_name = request.form.get('place_name')
-        place_id = get_place_id(place_name)
+        place_id, place_name = get_place_id(place_name)
         if place_id:
             place_url = f'https://www.google.com/maps/place/?q=place_id:{place_id}'
             print("Place url: ", place_url)
