@@ -17,6 +17,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from sqlalchemy.exc import NoResultFound
+from selenium.webdriver.common.service import Service
 
 from forms import LoginForm, RegisterForm, AccountForm
 from models import db, DBUser, Reviews, create_all
