@@ -1,26 +1,38 @@
-import datetime
+import csv
+import os
+import re
 import time
+from datetime import datetime, timedelta
 
 import bcrypt
-import requests
-from flask import Flask, render_template, request
-from flask import redirect, flash, url_for
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from sqlalchemy.exc import NoResultFound, IntegrityError
+import googlemaps
+from bs4 import BeautifulSoup
+from flask import Flask, request, render_template, redirect, url_for, flash, jsonify
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
+from sqlalchemy.exc import NoResultFound
 
 from forms import LoginForm, RegisterForm, AccountForm
-from models import DBUser, db, Reviews
+from models import db, DBUser, Reviews, create_all
 
 app = Flask(__name__)
-app.secret_key = 'scraper'
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
-app.config['USE_SESSION_FOR_NEXT'] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = r'sqlite:///users.sqlite'
+app.config['DEBUG'] = True
 db.init_app(app)
+gmaps = googlemaps.Client(key='AIzaSyDMNj_iWsB2-HoZT_grWBjZyqD4KsmR0aU')
+app.secret_key = os.environ.get('SECRET_KEY', 'fallback_secret_key_if_env_var_not_set')
 
-API_KEY = 'AIzaSyDMNj_iWsB2-HoZT_grWBjZyqD4KsmR0aU'
+if not os.path.isfile("users.sqlite"):
+    create_all(app)
 
 
 class User(UserMixin):
@@ -50,96 +62,291 @@ def find_user(username):
     return user
 
 
-def calculate_time_description(time_seconds):
-    review_time = datetime.datetime.fromtimestamp(time_seconds)
-    return review_time.strftime('%Y-%m-%d')
+def relative_to_absolute_date(relative_date_str):
+    # Current date
+    now = datetime.now()
 
+    # Look for number and unit
+    match = re.search(r'(\d+)\s*(second|minute|hour|day|week|month|year)[s]* ago', relative_date_str)
 
-def get_google_reviews(place):
-    url = 'https://maps.googleapis.com/maps/api/place/findplacefromtext/json'
-    params = {
-        'input': place,
-        'inputtype': 'textquery',
-        'fields': 'name,formatted_address,place_id',
-        'key': API_KEY
-    }
-    response = requests.get(url, params=params)
-    data = response.json()
+    if match is None:
+        # handle "a month ago" or "an hour ago"
+        match = re.search(r'(a|an)\s*(second|minute|hour|day|week|month|year)[s]* ago', relative_date_str)
 
-    if 'candidates' in data and len(data['candidates']) > 0:
-        place_id = data['candidates'][0]['place_id']
-        return fetch_all_reviews(place_id)
+        if match is None:
+            return None
+        else:
+            number = 1  # "a" or "an" represents one unit
+            unit = match.group(2)
     else:
-        return []
+        number = int(match.group(1))
+        unit = match.group(2)
+
+    # Subtract the appropriate amount of time
+    if unit == "second":
+        return (now - timedelta(seconds=number)).date()
+    elif unit == "minute":
+        return (now - timedelta(minutes=number)).date()
+    elif unit == "hour":
+        return (now - timedelta(hours=number)).date()
+    elif unit == "day":
+        return (now - timedelta(days=number)).date()
+    elif unit == "week":
+        return (now - timedelta(weeks=number)).date()
+    elif unit == "month":
+        return (now - timedelta(days=30 * number)).date()  # Approximate
+    elif unit == "year":
+        return (now - timedelta(days=365 * number)).date()  # Approximate
+    return None
 
 
-def fetch_all_reviews(place_id):
+def get_place_id(place_name):
+    try:
+        place_result = gmaps.places(place_name)
+        if place_result and 'results' in place_result and place_result['results']:
+            place_id = place_result['results'][0]['place_id']
+            print("Place Name: ", place_name)
+            print("Place ID: ", place_id)
+            return place_id
+        else:
+            print(f"No place found for: {place_name}")
+            return None
+    except Exception as e:
+        print(f"Error occurred while fetching place_id for: {place_name}")
+        print(f"Exception: {e}")
+        return None
+
+
+def scrape_all_reviews(driver, total_reviews):
     reviews = []
-    page_token = None
-    while True:
-        review_data, page_token = fetch_reviews(place_id, page_token)
-        reviews.extend(review_data)
-        if page_token is None:
-            break
-        time.sleep(2)  # Add delay before making the next request
+
+    review_selector = "//div[contains(@class, 'jftiEf fontBodyMedium ')]"
+
+    scraped_count = 0
+    while scraped_count < total_reviews:
+        current_reviews = driver.find_elements(By.XPATH, review_selector)
+        if not current_reviews:
+            print("No reviews found. Waiting for the reviews to load...")
+            time.sleep(2)
+            continue
+
+        # Scroll page to load more reviews
+        driver.execute_script('arguments[0].scrollIntoView(true);', current_reviews[-1])
+        time.sleep(2)
+
+        # Check if there are owner's responses and scroll to the end of them
+        for review in current_reviews:
+            try:
+                owner_response_elem = review.find_element(By.XPATH, ".//span[text()='Response from the owner']"
+                                                                    "/following::div[@class='wiI7pd'][1]")
+                driver.execute_script('arguments[0].scrollIntoView(true);', owner_response_elem)
+                time.sleep(1)
+            except NoSuchElementException:
+                # No owner response, continue to the next review
+                continue
+
+        new_reviews = driver.find_elements(By.XPATH, review_selector)
+        scraped_count = len(new_reviews)
+        print(f"{scraped_count}/{total_reviews} reviews scraped, in progress...")
+
+    print(f"{scraped_count}/{total_reviews} reviews scraped, done.\n")
+
+    # Parse each review
+    for index, review in enumerate(new_reviews, start=1):
+        try:
+            username = review.find_element(By.XPATH, ".//div[contains(@class, 'd4r55 ')]").text
+            rating_html = review.find_element(By.XPATH, ".//span[contains(@class, 'kvMYJc')]").get_attribute(
+                'innerHTML')
+            rating_soup = BeautifulSoup(rating_html, 'html.parser')
+            rating = len(
+                rating_soup.find_all('img', {'src': '//maps.gstatic.com/consumer/images/icons/2x/ic_star_rate_14.png'}))
+            # Get review time
+            review_time_relative = review.find_element(By.XPATH, ".//span[contains(@class, 'rsqaWe')]").text
+            review_time_absolute = relative_to_absolute_date(review_time_relative)  # Approximate
+
+            # Get review content
+            try:
+                review_content = review.find_element(By.XPATH, ".//span[contains(@class, 'wiI7pd')]").text
+                try:
+                    read_more_button = review.find_element(By.XPATH, ".//button[text()='More']")
+                    if read_more_button:
+                        # Click "More" to reveal full text
+                        read_more_button.click()
+                        review_content = review.find_element(By.XPATH, ".//span[contains(@class, 'wiI7pd')]").text
+                except NoSuchElementException:
+                    pass  # If no 'More' button is present
+            except NoSuchElementException:
+                review_content = "No review text provided."
+
+            # Check for owner's response after review content
+            try:
+                owner_response = review.find_element(By.XPATH,
+                                                     ".//span[text()='Response from the owner']"
+                                                     "/following::div[@class='wiI7pd'][1]").text
+            except NoSuchElementException:
+                owner_response = None
+
+            reviews.append({
+                'id': index,
+                'username': username,
+                'rating': rating,
+                'review_time': review_time_absolute,
+                'review_content': review_content,
+                'owner_response': owner_response
+            })
+
+            print(f"ID: {index}")
+            print(f"Username: {username}")
+            print(f"Rating: {rating}")
+            print(f"Review Time: {review_time_absolute}")
+            print(f"review_content: {review_content}")
+            # if owner_response is not None:
+            print(f"owner_response: {owner_response}")
+            print("\n")  # line break
+
+        except Exception as e:
+            print("Problem occurred while processing a review.")
+            print(f"Exception: {e}")
+            continue
 
     return reviews
 
 
-def fetch_reviews(place_id, page_token=None):
-    url = 'https://maps.googleapis.com/maps/api/place/details/json'
-    params = {
-        'place_id': place_id,
-        'fields': 'name,rating,reviews',
-        'key': API_KEY,
-        'pagetoken': page_token
-    }
-    response = requests.get(url, params=params)
-    data = response.json()
+def get_all_reviews(place_url):
+    # Setup Chrome options
+    chrome_options = Options()
 
-    if 'result' in data and 'reviews' in data['result']:
-        reviews = data['result']['reviews']
-        extracted_reviews = []
-        for review in reviews:
-            rating = review.get('rating', None)
-            comment = review.get('text', None)
-            if rating and comment:
-                author_name = review.get('author_name', None)
-                time_seconds = review.get('time', None)
-                time_description = calculate_time_description(time_seconds)
-                extracted_reviews.append({
-                    'rating': rating,
-                    'comment': comment,
-                    'author_name': author_name,
-                    'time_description': time_description
-                })
+    # Set path to chromedriver as per your configuration, change it to your path accordingly
+    chrome_driver_path = r'C:\Users\RAE\chromedriver_win32\chromedriver.exe'
 
-        next_page_token = data.get('next_page_token', None)
-        return extracted_reviews, next_page_token
-    else:
-        return [], None
+    # Choose Chrome Browser
+    driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chrome_options)
+    driver.get(place_url)
+
+    # Add a delay for the page to load
+    time.sleep(6)
+
+    # Find the Reviews button and click it
+    try:
+        reviews_button = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located(
+                (By.XPATH, '//button[starts-with(@aria-label, "Reviews for") and @role="tab"]')))
+    except TimeoutException:
+        print("No reviews to scrape. The location does not have any reviews.")
+        driver.quit()
+        return [], None, None
+
+    actions = ActionChains(driver)
+    actions.move_to_element(reviews_button).perform()
+    reviews_button.click()
+    time.sleep(3)
+
+    # Get overall rating after clicking the Reviews button
+    try:
+        rating_overall_element = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, '//div[@class="fontDisplayLarge"]')))
+        rating_overall = float(rating_overall_element.text)
+        total_reviews_element = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.XPATH, '//div[@class="fontBodySmall" and contains(text(), "reviews")]'))
+        )
+        total_reviews = int(total_reviews_element.text.split()[0])
+        print(f"Overall rating: {rating_overall}\n")
+        print(f"Total reviews: {total_reviews}\n")
+    except TimeoutException:
+        print("Could not find the overall rating or total reviews number.")
+        driver.quit()
+        return [], None, None
+
+    # Add a delay for the reviews to load
+    time.sleep(3)
+
+    reviews = scrape_all_reviews(driver, total_reviews)
+
+    driver.quit()
+
+    # If no reviews found...
+    if len(reviews) == 0:
+        return [], None, None
+    return reviews, rating_overall, total_reviews
 
 
-def save_reviews_to_database(user_id, place, reviews):
-    existing_reviews = Reviews.query.filter_by(user_id=user_id, company=place).all()
+@app.route('/', methods=['GET', 'POST'])
+@login_required
+def home():
+    reviews = []
+    place_name = ''
+    place_id = ''
+    place_url = ''
+    error_message = ''
+    overall_rating = ''
+    total_reviews = ''
 
-    for review in reviews:
-        # Check if the review already exists in the database
-        if any(existing_review.comments == review['comment']
-               for existing_review in existing_reviews):
-            flash('Review already exists! Review not saved!')
+    if request.method == 'POST':
+        place_name = request.form.get('place_name')
+        place_id = get_place_id(place_name)
+        if place_id:
+            place_url = f'https://www.google.com/maps/place/?q=place_id:{place_id}'
+            print("Place url: ", place_url)
+            flash("Please wait for the reviews to be scraped. \n"
+                  "The time it takes depends on how many reviews the place have.")
+            reviews, overall_rating, total_reviews = get_all_reviews(place_url)
+            flash("Scraping finished!")
+            if not reviews and overall_rating is None and total_reviews is None:
+                error_message = f"No reviews found for: {place_name}"
+
         else:
-            db_review = Reviews(
-                user_id=user_id,
-                company=place,
-                rating=review['rating'],
-                comments=review['comment'],
-                author=review['author_name'],
-                date=review['time_description']
-            )
-            db.session.add(db_review)
-            flash('Reviews saved successfully.')
+            error_message = f"No place found for: {place_name}"
+
+        # Write to CSV
+        try:
+            if len(reviews) > 0:
+                # Specify the folder path
+                folder = 'output_data'
+
+                # Create the folder if it doesn't exist
+                os.makedirs(folder, exist_ok=True)
+
+                filename = f"{place_name.replace(' ', '_')}_reviews.csv"
+                filepath = os.path.join(folder, filename)
+
+                with open(filepath, 'w', newline='', encoding='utf-8') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(["ID", "Username", "Rating", "Review Time", "Review Content", "Owner Response"])
+
+                    for review in reviews:
+                        writer.writerow([
+                            review['id'],
+                            review['username'],
+                            review['rating'],
+                            review['review_time'],
+                            review['review_content'],
+                            review['owner_response']
+                        ])
+            print(f"Reviews exported to {filepath}")
+        except Exception as e:
+            print(f"Error while writing to file: {e}")
+
+    return render_template('home.html', place_name=place_name, place_id=place_id, place_url=place_url,
+                           error_message=error_message, overall_rating=overall_rating, total_reviews=total_reviews,
+                           reviews=reviews)
+
+
+def save_reviews_to_database(user_id, place_name, reviews):
+    for review in reviews:
+        db_review = Reviews(
+            id=review['id'],
+            user_id=user_id,
+            reviewer=review['username'],
+            rating=review['rating'],
+            date=review['review_time'],
+            comments=review['review_content'],
+            owner_response=review['owner_response'],
+            place_name=place_name
+        )
+        db.session.add(db_review)
+
     db.session.commit()
+    flash('Reviews saved successfully.')
 
 
 @app.route('/save-reviews', methods=['POST'])
@@ -147,22 +354,13 @@ def save_reviews_to_database(user_id, place, reviews):
 def save_reviews():
     if request.method == 'POST':
         user_id = current_user.id  # Get the current user's ID
-        place = request.form.get('place')  # Get the place name from the form
-        reviews = get_google_reviews(place)  # Scrape reviews for the place
-        save_reviews_to_database(user_id, place, reviews)  # Save the reviews to the database
-    return redirect(url_for('home'))
+        place_name = request.form.get('place')  # Get the place name from the form
+        reviews = get_all_reviews(place_name)
 
+        # Call the function to save the reviews to the database
+        save_reviews_to_database(user_id, place_name, reviews)
 
-@app.route('/', methods=['GET', 'POST'])
-@login_required
-def home():
-    reviews = []
-    place = ''
-    if request.method == 'POST':
-        place = request.form.get('place')
-        if place:
-            reviews = get_google_reviews(place)
-    return render_template('home.html', reviews=reviews, place=place)
+    return redirect('/')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -237,4 +435,4 @@ def account():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
