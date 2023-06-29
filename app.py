@@ -273,6 +273,14 @@ def get_all_reviews(place_url):
     return reviews, rating_overall, total_reviews
 
 
+def format_filename(place, overall_rating, total_reviews):
+    # Properly case the place name and remove spaces
+    formatted_place = ''.join(place.title().split())
+    # Combine the filename
+    filename = f"{formatted_place}_{overall_rating}_{total_reviews}_Reviews.csv"
+    return filename
+
+
 @app.route('/', methods=['GET', 'POST'])
 @login_required
 def home():
@@ -309,7 +317,7 @@ def home():
                 # Create the folder if it doesn't exist
                 os.makedirs(folder, exist_ok=True)
 
-                filename = f"{place_name.replace(' ', '_')}_reviews.csv"
+                filename = format_filename(place_name, overall_rating, total_reviews)
                 filepath = os.path.join(folder, filename)
 
                 with open(filepath, 'w', newline='', encoding='utf-8') as file:
