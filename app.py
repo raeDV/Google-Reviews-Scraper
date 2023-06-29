@@ -251,7 +251,7 @@ def get_all_reviews(place_url):
         total_reviews_element = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.XPATH, '//div[@class="fontBodySmall" and contains(text(), "reviews")]'))
         )
-        total_reviews = int(total_reviews_element.text.split()[0])
+        total_reviews = int(total_reviews_element.text.split()[0].replace(',', ''))
         print(f"Overall rating: {rating_overall}\n")
         print(f"Total reviews: {total_reviews}\n")
     except TimeoutException:
