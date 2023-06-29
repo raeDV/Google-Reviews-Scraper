@@ -29,6 +29,7 @@ login_manager.login_view = 'login'
 app.config['SQLALCHEMY_DATABASE_URI'] = r'sqlite:///users.sqlite'
 app.config['DEBUG'] = True
 db.init_app(app)
+# Replace 'Your_API_Key' with your real google API key for testing
 gmaps = googlemaps.Client(key='AIzaSyDMNj_iWsB2-HoZT_grWBjZyqD4KsmR0aU')
 app.secret_key = os.environ.get('SECRET_KEY', 'fallback_secret_key_if_env_var_not_set')
 
