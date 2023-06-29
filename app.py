@@ -7,15 +7,15 @@ from datetime import datetime, timedelta
 import bcrypt
 import googlemaps
 from bs4 import BeautifulSoup
-from flask import Flask, request, render_template, redirect, url_for, flash, jsonify
+from flask import Flask, request, render_template, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from sqlalchemy.exc import NoResultFound
 
 from forms import LoginForm, RegisterForm, AccountForm
@@ -154,7 +154,7 @@ def scrape_all_reviews(driver, total_reviews):
     # Parse each review
     for index, review in enumerate(new_reviews, start=1):
         try:
-            username = review.find_element(By.XPATH, ".//div[contains(@class, 'd4r55 ')]").text
+            reviewer = review.find_element(By.XPATH, ".//div[contains(@class, 'd4r55 ')]").text
             rating_html = review.find_element(By.XPATH, ".//span[contains(@class, 'kvMYJc')]").get_attribute(
                 'innerHTML')
             rating_soup = BeautifulSoup(rating_html, 'html.parser')
@@ -162,7 +162,7 @@ def scrape_all_reviews(driver, total_reviews):
                 rating_soup.find_all('img', {'src': '//maps.gstatic.com/consumer/images/icons/2x/ic_star_rate_14.png'}))
             # Get review time
             review_time_relative = review.find_element(By.XPATH, ".//span[contains(@class, 'rsqaWe')]").text
-            review_time_absolute = relative_to_absolute_date(review_time_relative)  # Approximate
+            review_time = relative_to_absolute_date(review_time_relative)  # Approximate
 
             # Get review content
             try:
@@ -188,17 +188,17 @@ def scrape_all_reviews(driver, total_reviews):
 
             reviews.append({
                 'id': index,
-                'username': username,
+                'reviewer': reviewer,
                 'rating': rating,
-                'review_time': review_time_absolute,
+                'review_time': review_time,
                 'review_content': review_content,
                 'owner_response': owner_response
             })
 
             print(f"ID: {index}")
-            print(f"Username: {username}")
+            print(f"Reviewer: {reviewer}")
             print(f"Rating: {rating}")
-            print(f"Review Time: {review_time_absolute}")
+            print(f"Review Time: {review_time}")
             print(f"review_content: {review_content}")
             # if owner_response is not None:
             print(f"owner_response: {owner_response}")
@@ -311,12 +311,12 @@ def home():
 
                 with open(filepath, 'w', newline='', encoding='utf-8') as file:
                     writer = csv.writer(file)
-                    writer.writerow(["ID", "Username", "Rating", "Review Time", "Review Content", "Owner Response"])
+                    writer.writerow(["ID", "Reviewer", "Rating", "Review Time", "Review Content", "Owner Response"])
 
                     for review in reviews:
                         writer.writerow([
                             review['id'],
-                            review['username'],
+                            review['reviewer'],
                             review['rating'],
                             review['review_time'],
                             review['review_content'],
@@ -331,36 +331,34 @@ def home():
                            reviews=reviews)
 
 
-def save_reviews_to_database(user_id, place_name, reviews):
-    for review in reviews:
-        db_review = Reviews(
-            id=review['id'],
-            user_id=user_id,
-            reviewer=review['username'],
-            rating=review['rating'],
-            date=review['review_time'],
-            comments=review['review_content'],
-            owner_response=review['owner_response'],
-            place_name=place_name
-        )
-        db.session.add(db_review)
-
-    db.session.commit()
-    flash('Reviews saved successfully.')
-
-
 @app.route('/save-reviews', methods=['POST'])
 @login_required
 def save_reviews():
-    if request.method == 'POST':
-        user_id = current_user.id  # Get the current user's ID
-        place_name = request.form.get('place')  # Get the place name from the form
-        reviews = get_all_reviews(place_name)
+    user_id = current_user.id
+    place_name = request.form.get('place_name')
+    reviews = request.form.get('review')
 
-        # Call the function to save the reviews to the database
-        save_reviews_to_database(user_id, place_name, reviews)
+    try:
+        # Save reviews to the database
+        for review_data in reviews:
+            review = Reviews(
+                user_id=user_id,
+                place_name=place_name,
+                reviewer=review_data['reviewer'],
+                rating=review_data['rating'],
+                review_time=review_data['review_time'],
+                review_content=review_data['review_content'],
+                owner_response=review_data['owner_response']
+            )
+            db.session.add(review)
 
-    return redirect('/')
+        db.session.commit()
+
+        flash("Reviews saved successfully!")
+        return redirect('/')
+    except Exception as e:
+        flash(f"Error occurred while saving reviews: {str(e)}")
+        return redirect('/')
 
 
 @app.route('/login', methods=['GET', 'POST'])
