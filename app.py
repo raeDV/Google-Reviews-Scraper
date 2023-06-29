@@ -196,14 +196,14 @@ def scrape_all_reviews(driver, total_reviews):
                 'owner_response': owner_response
             })
 
-            print(f"ID: {index}")
-            print(f"Username: {username}")
-            print(f"Rating: {rating}")
-            print(f"Review Time: {review_time_absolute}")
-            print(f"review_content: {review_content}")
+            # print(f"ID: {index}")
+            # print(f"Username: {username}")
+            # print(f"Rating: {rating}")
+            # print(f"Review Time: {review_time_absolute}")
+            # print(f"review_content: {review_content}")
             # if owner_response is not None:
-            print(f"owner_response: {owner_response}")
-            print("\n")  # line break
+            # print(f"owner_response: {owner_response}")
+            # print("\n")  # line break
 
         except Exception as e:
             print("Problem occurred while processing a review.")
