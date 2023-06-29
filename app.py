@@ -10,14 +10,14 @@ from bs4 import BeautifulSoup
 from flask import Flask, request, render_template, redirect, url_for, flash, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from sqlalchemy.exc import NoResultFound
-from selenium.webdriver.common.service import Service
 
 from forms import LoginForm, RegisterForm, AccountForm
 from models import db, DBUser, Reviews, create_all
