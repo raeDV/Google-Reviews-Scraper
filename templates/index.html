@@ -2,6 +2,30 @@
 <html>
 <head>
     <title>Google Reviews Scraper</title>
+    <style>
+
+        table {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+        }
+
+        .comment {
+            max-width: 500px;
+        }
+
+        .rating {
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <h1>Google Reviews Scraper</h1>
@@ -12,15 +36,26 @@
 
     {% if reviews %}
         <h2>Reviews for {{ place }}:</h2>
-        <ul>
-        {% for review in reviews %}
-            <li>Rating: {{ review.rating }}</li>
-            <li>Comment: {{ review.comment }}</li>
-            <li>Author: {{ review.author_name }}</li>
-            <li>Time: {{ review.time_description }}</li>
-            <br>
-        {% endfor %}
-        </ul>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                    <th>Author</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for review in reviews %}
+                <tr>
+                    <td class="rating">{{ review.rating }}</td>
+                    <td class="comment">{{ review.comment }}</td>
+                    <td>{{ review.author_name }}</td>
+                    <td>{{ review.time_description }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     {% elif no_reviews %}
         <p>We found no reviews for this place, please check your input and try again.</p>
     {% endif %}

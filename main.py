@@ -1,21 +1,20 @@
+import csv
+import time
+
+import googlemaps
+from bs4 import BeautifulSoup
 from flask import Flask, request, render_template
 from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
-from selenium.webdriver.firefox.options import Options
-from bs4 import BeautifulSoup
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
-
-import time
-import random
-import googlemaps
+from selenium.webdriver.support.ui import WebDriverWait
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
 # Please replace the 'Your_API_Key' with your real Google API Key
-gmaps = googlemaps.Client(key='Your_API_Key')
+gmaps = googlemaps.Client(key='AIzaSyDMNj_iWsB2-HoZT_grWBjZyqD4KsmR0aU')
 
 
 def get_place_id(place_name):
@@ -36,68 +35,55 @@ def get_place_id(place_name):
 
 
 def get_all_reviews(place_url):
-    # Setup firefox options
-    firefox_options = Options()
-    # firefox_options.add_argument("--headless")
+    # Set up Chrome options
+    chrome_options = ChromeOptions()
+    # chrome_options.add_argument("--headless")
 
-    # Set path to geckodriver as per your configuration, change it to your path accordingly
-    webdriver_service = Service(r'D:\My Files\download\geckodriver.exe')
+    # Set path to chromedriver as per your configuration, change it to your path accordingly
+    webdriver_service = ChromeService(r'C:\Users\RAE\chromedriver_win32\chromedriver.exe')
 
-    # Choose Firefox Browser
-    driver = webdriver.Firefox(service=webdriver_service, options=firefox_options)
+    # Choose Chrome Browser
+    driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
     driver.get(place_url)
 
     # Add a delay for the page to load
     time.sleep(5)
 
     # Find the Reviews button and click it
-    reviews_button = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.XPATH, '//button[starts-with(@aria-label, "Reviews for") and @role="tab"]')))
-
-    actions = ActionChains(driver)
-    actions.move_to_element(reviews_button).perform()  # Move to the button
-    time.sleep(2)  # Wait for a while
-    reviews_button.click()  # Click the button
+    wait = WebDriverWait(driver, 10)
+    reviews_button = wait.until(EC.element_to_be_clickable((By.XPATH, '//button[starts-with(@aria-label, "Reviews for") and @role="tab"]')))
+    reviews_button.click()
 
     # Add a delay for the reviews to load
     time.sleep(5)
 
-    # Print page source after click
-    print(driver.page_source)
+    # Manually click and scroll to load more reviews
+    print("Please manually click and scroll to load all reviews.")
+    input("Press Enter when you have loaded all the reviews.")
 
-    SCROLL_PAUSE_TIME = 2
-
-    # Get scroll height
-    last_height = driver.execute_script("return document.body.scrollHeight")
-
-    while True:
-        # Scroll down to bottom
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-
-        # Wait to load page
-        time.sleep(SCROLL_PAUSE_TIME)
-
-        # Calculate new scroll height and compare with last scroll height
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:
-            break
-        last_height = new_height
-
+    # Get the page source
     page = BeautifulSoup(driver.page_source, 'html.parser')
-    driver.quit()
 
-    reviews_div = page.find_all('div', class_='wiI7pd')
+    reviews_div = page.find_all('div', class_='section-review')
     reviews = []
     for review in reviews_div:
         try:
-            author = review.find('div', class_='TSUbDb').text
-            rating = review.find('span', class_='Fam1ne EBe2gf').get('aria-label')
-            text = review.find('span', class_='jxjCjc').text
+            author = review.find('div', class_='section-review-title').text
+            rating = review.find('span', class_='section-review-stars')['aria-label']
+            text = review.find('span', class_='section-review-text').text
             reviews.append((author, rating, text))
         except Exception as e:
             print("Problem occurred while processing a review.")
             print(f"Exception: {e}")
             continue
+
+    # Write reviews to CSV file
+    with open('reviews.csv', 'w', newline='', encoding='utf-8') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['Author', 'Rating', 'Text'])  # Write header row
+        writer.writerows(reviews)  # Write review rows
+
+    driver.quit()
 
     return reviews
 
