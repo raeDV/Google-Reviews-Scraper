@@ -5,7 +5,7 @@ db = SQLAlchemy()
 
 class DBUser(db.Model):
     __tablename__ = 'users'
-    user_id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
     username = db.Column(db.Text(), nullable=False)
     email = db.Column(db.Text(), nullable=False)
     phone = db.Column(db.Text())
@@ -17,9 +17,9 @@ class DBUser(db.Model):
 
 class Reviews(db.Model):
     __tablename__ = 'reviews'
-    id = db.Column(db.Integer(), primary_key=True)
-    user_id = db.Column(db.Integer(), db.ForeignKey('users.user_id'), nullable=False)
-    place_name = db.Column(db.Text(), nullable=False)
+    id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer(), db.ForeignKey('users.id'), nullable=False)
+    # place_name = db.Column(db.Text(), nullable=False)
     reviewer = db.Column(db.Text(), nullable=False)
     rating = db.Column(db.Integer(), nullable=False)
     review_time = db.Column(db.Text(), nullable=False)
@@ -27,7 +27,7 @@ class Reviews(db.Model):
     owner_response = db.Column(db.Text(), default=None)
 
     def __repr__(self):
-        return "<Reviews {}: {} {} >".format(self.username, self.place_name, self.rating)
+        return "<Reviews {}: {} {} >".format(self.user_id, self.reviewer, self.rating)
 
     def save_to_db(self):
         db.session.add(self)

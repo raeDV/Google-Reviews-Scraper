@@ -331,28 +331,24 @@ def home():
                            reviews=reviews)
 
 
-@app.route('/save-reviews', methods=['POST'])
+@app.route('/save_reviews', methods=['POST'])
 @login_required
 def save_reviews():
-    user_id = current_user.id
-    place_name = request.form.get('place_name')
-    reviews = request.form.get('review')
+
+    reviews = request.form.getlist('reviews')
 
     try:
         # Save reviews to the database
-        for review_data in reviews:
-            review = Reviews(
-                user_id=user_id,
-                place_name=place_name,
-                reviewer=review_data['reviewer'],
-                rating=review_data['rating'],
-                review_time=review_data['review_time'],
-                review_content=review_data['review_content'],
-                owner_response=review_data['owner_response']
+        for review in reviews:
+            review_model = Reviews(
+                user_id=current_user.id,
+                reviewer=review['reviewer'],
+                rating=review['rating'],
+                review_time=review['review_time'],
+                review_content=review['review_content'],
+                owner_response=review['owner_response']
             )
-            db.session.add(review)
-
-        db.session.commit()
+            review_model.save_to_db()  # Save the review to the database using the `save_to_db` method
 
         flash("Reviews saved successfully!")
         return redirect('/')
