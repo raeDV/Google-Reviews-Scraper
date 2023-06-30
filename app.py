@@ -301,6 +301,7 @@ def home():
         if len(reviews) > 0:
             for review in reviews:
                 save_review(review)
+
         # Write to CSV
         try:
             if len(reviews) > 0:

@@ -24,7 +24,7 @@ class Reviews(db.Model):
     rating = db.Column(db.Integer(), nullable=False)
     review_time = db.Column(db.Text(), nullable=False)
     review_content = db.Column(db.Text(), nullable=False)
-    owner_response = db.Column(db.Text(), default=None)
+    owner_response = db.Column(db.Text())
 
     def __repr__(self):
         return "<Reviews {}: {} {} >".format(self.user_id, self.reviewer, self.rating)
