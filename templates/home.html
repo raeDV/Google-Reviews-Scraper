@@ -13,28 +13,41 @@
       <p style="color: red;">Note: Please double-check the place URL to confirm it's the right place you want to check.</p>
 </form>
 
-<!-- Confirmation Section -->
-{% if place_name %}
-<h2>Place Information</h2>
-<p>Place Name: {{ place_name }}</p>
-<p>Place ID: {{ place_id }}</p>
-<p>Place URL: {{ place_url }}</p>
-{% endif %}
-
-<!-- Error Messages Section -->
-{% if error_message %}
-<p class="error">{{ error_message }}</p>
-{% endif %}
-
-<!-- General Information Section -->
-{% if overall_rating %}
-<p>Overall rating: {{ overall_rating }}</p>
-<p>Total reviews: {{ total_reviews }}</p>
+<!-- Place and General Information Section -->
+{% if place_name or overall_rating %}
+<h2>Place and General Information</h2>
+<div class="result">
+    <table>
+        <thead>
+        <tr>
+            <th>Place Name</th>
+            <th>Place ID</th>
+            <th>Place URL</th>
+            <th>Overall Rating</th>
+            <th>Total Reviews</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>{{ place_name }}</td>
+            <td>{{ place_id }}</td>
+            <td>{{ place_url }}</td>
+            <td>{{ overall_rating }}</td>
+            <td>{{ total_reviews }}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 {% endif %}
 
 <!-- Process Section -->
 {% if scraping_progress %}
 <p>{{ scraping_progress }}</p>
+{% endif %}
+
+<!-- Error Messages Section -->
+{% if error_message %}
+<p class="error">{{ error_message }}</p>
 {% endif %}
 
 <!-- Reviews Section -->
