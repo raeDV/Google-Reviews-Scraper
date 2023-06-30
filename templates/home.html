@@ -10,6 +10,7 @@
 <form method="POST">
     <input type="text" name="place_name" placeholder="Enter a place name">
     <button type="submit">Scrape Reviews</button>
+      <p style="color: red;">Note: Please double-check the place URL to confirm it's the right place you want to check.</p>
 </form>
 
 <!-- Confirmation Section -->
@@ -39,10 +40,7 @@
 <!-- Reviews Section -->
 {% if reviews %}
 <h2>Reviews:</h2>
-<form method="POST" action="{{ url_for('home') }}">
 
-    <button type="submit">Save Reviews</button>
-</form>
 <div class="result">
     <table>
         <thead>
@@ -75,7 +73,4 @@
 <p>We found no reviews for this place, please check your input and try again.</p>
 {% endif %}
 
-<!-- General Messages Section -->
-<p>Please wait for the reviews to be scraped. The time it takes depends on how many reviews the place has.</p>
-<p>Please double check the place url to confirm it's the right place you want to check.</p>
 {% endblock %}

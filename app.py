@@ -287,10 +287,8 @@ def home():
         if place_id:
             place_url = f'https://www.google.com/maps/place/?q=place_id:{place_id}'
             print("Place url: ", place_url)
-            flash("Please wait for the reviews to be scraped. \n"
-                  "The time it takes depends on how many reviews the place have.")
             reviews, overall_rating, total_reviews = get_all_reviews(place_url)
-            flash("Scraping finished!")
+            flash("Scraping finished! Reviews saved to csv and database!")
             if not reviews and overall_rating is None and total_reviews is None:
                 error_message = f"No reviews found for: {place_name}"
 
