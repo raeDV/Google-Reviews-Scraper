@@ -278,7 +278,7 @@ def format_filename(official_place_name, overall_rating, total_reviews):
     # Properly case the place name and remove spaces
     formatted_place = ''.join(official_place_name.split())
     # Combine the filename
-    filename = f"{formatted_place}_{overall_rating}_{total_reviews}Reviews.csv"
+    filename = f"{formatted_place}_{overall_rating}_{total_reviews}_Reviews.csv"
     return filename
 
 
