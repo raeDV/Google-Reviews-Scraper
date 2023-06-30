@@ -200,8 +200,8 @@ def get_all_reviews(place_url):
 
     actions = ActionChains(driver)
     actions.move_to_element(reviews_button).perform()
-    time.sleep(2)
     reviews_button.click()
+    time.sleep(2)
 
     # Get overall rating after clicking the Reviews button
     try:
