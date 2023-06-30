@@ -39,7 +39,8 @@
 <!-- Reviews Section -->
 {% if reviews %}
 <h2>Reviews:</h2>
-<form method="POST" action="/save_reviews">
+<form method="POST" action="{{ url_for('home') }}">
+
     <button type="submit">Save Reviews</button>
 </form>
 <div class="result">

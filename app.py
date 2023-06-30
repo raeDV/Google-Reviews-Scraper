@@ -297,6 +297,10 @@ def home():
         else:
             error_message = f"No place found for: {place_name}"
 
+        # Save to Database
+        if len(reviews) > 0:
+            for review in reviews:
+                save_review(review)
         # Write to CSV
         try:
             if len(reviews) > 0:
@@ -322,6 +326,7 @@ def home():
                             review['review_content'],
                             review['owner_response']
                         ])
+
             print(f"Reviews exported to {filepath}")
         except Exception as e:
             print(f"Error while writing to file: {e}")
@@ -331,30 +336,20 @@ def home():
                            reviews=reviews)
 
 
-@app.route('/save_reviews', methods=['POST'])
-@login_required
-def save_reviews():
-
-    reviews = request.form.getlist('reviews')
-
+def save_review(review_data):
     try:
-        # Save reviews to the database
-        for review in reviews:
-            review_model = Reviews(
-                user_id=current_user.id,
-                reviewer=review['reviewer'],
-                rating=review['rating'],
-                review_time=review['review_time'],
-                review_content=review['review_content'],
-                owner_response=review['owner_response']
-            )
-            review_model.save_to_db()  # Save the review to the database using the `save_to_db` method
-
-        flash("Reviews saved successfully!")
-        return redirect('/')
+        review = Reviews(
+            reviewer=review_data['reviewer'],
+            rating=review_data['rating'],
+            review_time=review_data['review_time'],
+            review_content=review_data['review_content'],
+            owner_response=review_data['owner_response']
+        )
+        db.session.add(review)
+        db.session.commit()
     except Exception as e:
-        flash(f"Error occurred while saving reviews: {str(e)}")
-        return redirect('/')
+        db.session.rollback()
+        print(f"Error while saving review in the database: {e}")
 
 
 @app.route('/login', methods=['GET', 'POST'])
