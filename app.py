@@ -274,11 +274,11 @@ def get_all_reviews(place_url):
     return reviews, rating_overall, total_reviews
 
 
-def format_filename(place, overall_rating, total_reviews):
+def format_filename(official_place_name, overall_rating, total_reviews):
     # Properly case the place name and remove spaces
-    formatted_place = ''.join(place.title().split())
+    formatted_place = ''.join(official_place_name.split())
     # Combine the filename
-    filename = f"{formatted_place}_{overall_rating}_{total_reviews}_Reviews.csv"
+    filename = f"{formatted_place}_{overall_rating}_{total_reviews}Reviews.csv"
     return filename
 
 
