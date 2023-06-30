@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %} Home {% endblock %}
+{% block content %}
+
+<br />
+<h3>Search google reviews</h3>
+<form method="POST" action="{{ url_for('views.home') }}">
+  <div align="center" class="form-group">
+    <br />
+    <input type="search" class="form-control" name="place_name" id="search"  placeholder="Please enter company name or address" aria-label="Search" />
+    <br />
+    <button type="submit" class="btn btn-primary">Get Reviews</button>
+  </div>
+</form>
+
+ {% if place_name %}
+    <h2>Place Information</h2>
+    <p>Place Name: {{ place_name }}</p>
+    <p>Place ID: {{ place_id }}</p>
+    <p>Place URL: {{ place_url }}</p>
+    {% endif %}
+
+    <!-- Error Messages Section -->
+    {% if error_message %}
+        <p class="error">{{ error_message }}</p>
+    {% endif %}
+
+    <!-- General Information Section -->
+    {% if overall_rating %}
+        <p>Overall rating: {{ overall_rating }}</p>
+        <p>Total reviews: {{ total_reviews }}</p>
+    {% endif %}
+
+    <!-- Process Section -->
+    {% if scraping_progress %}
+        <p>{{ scraping_progress }}</p>
+    {% endif %}
+
+    <!-- Reviews Section -->
+    {% if reviews %}
+        <h2>Reviews:</h2>
+        <table>
+          <thead>
+              <tr>
+                  <th>ID</th>
+                  <th>Username</th>
+                  <th>Review Time</th>
+                  <th>Review Content</th>
+                  <th>Rating</th>
+                  <th>Owner Response</th>
+              </tr>
+          </thead>
+          <tbody>
+          {% for review in reviews %}
+              <tr>
+                  <td>{{ review.id }}</td>
+                  <td>{{ review.username }}</td>
+                  <td>{{ review.rating }}</td>
+                  <td>{{ review.review_time }}</td>
+                  <td width="500px">{{ review.review_content }}</td>
+                  <td>{{ review.owner_response }}</td>
+              </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+    {% elif no_reviews %}
+      <p>We found no reviews for this place, please check your input and try again.</p>
+    {% endif %}
+
+<br/>
+{% endblock %}

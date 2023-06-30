@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %} Home {% endblock %}
+{% block content %}
+
+<br />
+<h3>Search google reviews</h3>
+<form method="POST" action="{{ url_for('views.home') }}">
+  <div align="center" class="form-group">
+    <br />
+    <input type="search" class="form-control" name="place" id="search"  placeholder="Please enter company name or address" aria-label="Search" />
+    <br />
+    <button type="submit" class="btn btn-primary">Get Reviews</button>
+  </div>
+</form>
+
+ {% if reviews %}
+        <h2>Reviews for {{ place }}:</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rating</th>
+                    <th>Comment</th>
+                    <th>Author</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for review in reviews %}
+                <tr>
+                    <td class="rating">{{ review.rating }}</td>
+                    <td class="comment">{{ review.comment }}</td>
+                    <td>{{ review.author_name }}</td>
+                    <td>{{ review.time_description }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+<br/>
+{% endblock %}
