@@ -6,7 +6,7 @@ class User(db.Model, UserMixin):
     email= db.Column(db.String(100), unique=True)
     userName = db.Column(db.String(100))
     password=db.Column(db.String(100))
-    # reviews = db.relationship('Review', backref='user',lazy=True)
+    reviews = db.relationship('Review', backref='user',lazy=True)
 
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -15,6 +15,6 @@ class Review(db.Model):
     comment = db.Column(db.Text, nullable=False)
     author_name = db.Column(db.String(100), nullable=False)
     time_description = db.Column(db.String(100), nullable=False)
-    # user_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=False)
 
 
