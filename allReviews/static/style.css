@@ -1,0 +1,21 @@
+table {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+h2 {
+    text-align: center;
+}
+
+th, td {
+    border: 1px solid black;
+    padding: 8px;
+}
+
+.comment {
+    max-width: 500px;
+}
+
+.rating {
+    text-align: center;
+}
