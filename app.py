@@ -1,13 +1,15 @@
 import csv
+import json
 import os
 import re
+import sqlite3
 import time
 from datetime import datetime, timedelta
 
 import bcrypt
 import googlemaps
 from bs4 import BeautifulSoup
-from flask import Flask, request, render_template, redirect, url_for, flash
+from flask import Flask, request, render_template, redirect, url_for, flash, jsonify, g
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
@@ -288,47 +290,47 @@ def home():
             place_url = f'https://www.google.com/maps/place/?q=place_id:{place_id}'
             print("Place url: ", place_url)
             reviews, overall_rating, total_reviews = get_all_reviews(place_url)
-            flash("Scraping finished! Reviews saved to csv and database!")
+            flash("Scraping finished!")
             if not reviews and overall_rating is None and total_reviews is None:
                 error_message = f"No reviews found for: {place_name}"
 
         else:
             error_message = f"No place found for: {place_name}"
 
-        # Save to Database
-        if len(reviews) > 0:
-            for review in reviews:
-                save_review(review)
-
-        # Write to CSV
-        try:
+            # Save to Database
             if len(reviews) > 0:
-                # Specify the folder path
-                folder = 'output_data'
+                for review in reviews:
+                    save_review(review)
 
-                # Create the folder if it doesn't exist
-                os.makedirs(folder, exist_ok=True)
+            # Write to CSV
+            try:
+                if len(reviews) > 0:
+                    # Specify the folder path
+                    folder = 'output_data'
 
-                filename = f"{place_name.replace(' ', '_')}_reviews.csv"
-                filepath = os.path.join(folder, filename)
+                    # Create the folder if it doesn't exist
+                    os.makedirs(folder, exist_ok=True)
 
-                with open(filepath, 'w', newline='', encoding='utf-8') as file:
-                    writer = csv.writer(file)
-                    writer.writerow(["ID", "Reviewer", "Rating", "Review Time", "Review Content", "Owner Response"])
+                    filename = f"{place_name.replace(' ', '_')}_reviews.csv"
+                    filepath = os.path.join(folder, filename)
 
-                    for review in reviews:
-                        writer.writerow([
-                            review['id'],
-                            review['reviewer'],
-                            review['rating'],
-                            review['review_time'],
-                            review['review_content'],
-                            review['owner_response']
-                        ])
+                    with open(filepath, 'w', newline='', encoding='utf-8') as file:
+                        writer = csv.writer(file)
+                        writer.writerow(["ID", "Reviewer", "Rating", "Review Time", "Review Content", "Owner Response"])
 
-            print(f"Reviews exported to {filepath}")
-        except Exception as e:
-            print(f"Error while writing to file: {e}")
+                        for review in reviews:
+                            writer.writerow([
+                                review['id'],
+                                review['reviewer'],
+                                review['rating'],
+                                review['review_time'],
+                                review['review_content'],
+                                review['owner_response']
+                            ])
+
+                print(f"Reviews exported to {filepath}")
+            except Exception as e:
+                print(f"Error while writing to file: {e}")
 
     return render_template('home.html', place_name=place_name, place_id=place_id, place_url=place_url,
                            error_message=error_message, overall_rating=overall_rating, total_reviews=total_reviews,

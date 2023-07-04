@@ -34,3 +34,7 @@ class AccountForm(FlaskForm):
     oldPassword = PasswordField('Old Password', validators=[InputRequired()])
     newPassword = PasswordField('New Password', validators=[InputRequired(), Length(8)])
     submit = SubmitField('Save')
+
+
+class SaveReviewsForm(FlaskForm):
+    submit = SubmitField('Save Reviews')
