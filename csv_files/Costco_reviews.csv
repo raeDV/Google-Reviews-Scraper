@@ -1,10 +1,19 @@
-Rating,Comment,Author,Time
-4,Wonderful place to buy most of the things. It would be great if there is a way to understand about everyday gas price and some limited time offer in wear-house.,Ehsan Moon,2022-12-12
-4,"Just like any other Costco stores. Except this one is a bit small, but it can do. A very busy place located in busy business district in Ville St Laurent.",Omar Kuzbari,2023-03-04
-3,"Choatic place with great variety of merchandise, quality food, great sales, the best food corner (small restaurant) inside for a quick eating if your hungry on your way out!
+Id,User Name,Rating,Review Time,Review Content,Owner Response
+1,Ehsan Moon,4,2023-01-05,Wonderful place to buy most of the things. It would be great if there is a way to understand about everyday gas price and some limited time offer in wear-house.,
+2,Omar Kuzbari,4,2023-04-05,"Just like any other Costco stores. Except this one is a bit small, but it can do. A very busy place located in busy business district in Ville St Laurent.",
+3,Marie D.,3,2023-06-27,"Choatic place with great variety of merchandise, quality food, great sales, the best food corner (small restaurant) inside for a quick eating if your hungry on your way out!
 
 There parking spaces are the worst. Dangerous zones in front of the store to cross from the parking lot through the pedestrian space (no pedestrian safety) to the front store & the worst traffic area for cars.
 
-My anxiety is always at a high peek level when driving there due to the high risk of someone potentially getting hit/hurt by car (pedestrians or not)🥵😵‍💫😨",Marie D.,2023-06-27
-2,I like cosco and I’ve been going there for over 10 years. This is the first time a cashier screamed at me for no reason. She had an attitude from the beginning. It doesn’t make sense. « marine darline » is the name on my receipt. She has braids. I Hope you’ll train her a bit about the importance of customer service,Maimouna Sylla,2023-04-20
-4,"If it's during rush hour, expect long wait times at the fast food stall. It can be upwards of 25 minutes.",William Wang,2023-06-22
+My anxiety is always at a high peek level when driving there due to the high risk of someone potentially getting hit/hurt by car (pedestrians or not)🥵😵‍💫😨",
+4,Maimouna Sylla,2,2023-05-05,I like cosco and I’ve been going there for over 10 years. This is the first time a cashier screamed at me for no reason. She had an attitude from the beginning. It doesn’t make sense. « marine darline » is the name on my receipt. She has braids. I Hope you’ll train her a bit about the importance of customer service,
+5,William Wang,4,2023-06-27,"If it's during rush hour, expect long wait times at the fast food stall. It can be upwards of 25 minutes.",
+6,Laura Perkins,1,2023-03-06,Waited 30+ minutes for syrup to be replaced for rootbeer. Talked to 3 different employees who sell said it would be done.,
+7,Afzal Sheikh,4,2023-02-04,"Huge collection of groceries and other daily usable stuff. Good for big families. Prices compared to the other departmental grocery stores are more or less the same, but if I consider sells or special prices for particular items, it seems to be a bit expensive.
+
+Inside was crowded. At the time of entering the store, there was no lineup, but coming out of the store at the cash big lineup and it took a while.
+
+In the car 🚗 parking it was crowded too.",
+8,Stefanie Podlog,1,2023-03-06,"My intention was to buy a Privilege ($60) membership to have access to the optic center. I will not regularly come here for regular shopping or anything else. It took over 40 minutes and multiple aggressive (up)sale attempts, and all my patients to make them understand that I make and educated decision regarding my membership. I do not want to be talked to in this misogynistic manner.",
+9,Adetoyese Oyedun,4,2021-07-04,This Costco store is not as big as the ones at Laval but still big enough compared to other Costco stores. Queue at the entrance to enter due Covid19 regulations. The guy at the door was a bit rude to us when he asked only of us to enter despite allowing others that are 3 of one family to enter the store.,
+10,Howard W (HDog),4,2023-06-13,Typical Costco but parking is horrible. You can find different items here compared to other costco's due to the demographic that they cater to. This place is always busy. No gas bar.,

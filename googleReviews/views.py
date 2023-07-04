@@ -79,22 +79,25 @@ def get_place_id(place_name):
         return None
 
 
-def scrape_all_reviews(driver, total_reviews):
+def scrape_all_reviews(driver, number_reviews):
     reviews = []
-
     review_selector = "//div[contains(@class, 'jftiEf fontBodyMedium ')]"
-
     scraped_count = 0
-    while scraped_count < total_reviews:
+
+    while scraped_count < number_reviews:
         current_reviews = driver.find_elements(By.XPATH, review_selector)
+
+        # Scroll page to load more reviews if no reviews are found
         if not current_reviews:
-            print("No reviews found. Waiting for the reviews to load...")
+            driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
             time.sleep(2)
             continue
 
-        # Scroll page to load more reviews
-        driver.execute_script('arguments[0].scrollIntoView(true);', current_reviews[-1])
-        time.sleep(2)
+        # Scroll page to load more reviews if the number of reviews found is less than the desired number
+        if scraped_count < number_reviews and len(current_reviews) < number_reviews:
+            driver.execute_script('arguments[0].scrollIntoView(true);', current_reviews[-1])
+            time.sleep(2)
+            continue
 
         # Check if there are owner's responses and scroll to the end of them
         for review in current_reviews:
@@ -109,12 +112,16 @@ def scrape_all_reviews(driver, total_reviews):
 
         new_reviews = driver.find_elements(By.XPATH, review_selector)
         scraped_count = len(new_reviews)
-        print(f"{scraped_count}/{total_reviews} reviews scraped, in progress...")
+        print(f"{scraped_count}/{number_reviews} reviews scraped, in progress...")
 
-    print(f"{scraped_count}/{total_reviews} reviews scraped, done.\n")
+        # Break the loop if the desired number of reviews is reached
+        if scraped_count >= number_reviews:
+            break
+
+    print(f"{scraped_count}/{number_reviews} reviews scraped, done.\n")
 
     # Parse each review
-    for index, review in enumerate(new_reviews, start=1):
+    for index, review in enumerate(new_reviews[:number_reviews], start=1):
         try:
             username = review.find_element(By.XPATH, ".//div[contains(@class, 'd4r55 ')]").text
             rating_html = review.find_element(By.XPATH, ".//span[contains(@class, 'kvMYJc')]").get_attribute(
@@ -162,7 +169,6 @@ def scrape_all_reviews(driver, total_reviews):
             print(f"Rating: {rating}")
             print(f"Review Time: {review_time_absolute}")
             print(f"review_content: {review_content}")
-            # if owner_response is not None:
             print(f"owner_response: {owner_response}")
             print("\n")  # line break
 
@@ -174,31 +180,27 @@ def scrape_all_reviews(driver, total_reviews):
     return reviews
 
 
-
-def get_all_reviews(place_url):
-    # Setup  options
+def get_all_reviews(place_url, number_reviews):
+    # Setup chrome options
     chrome_options = ChromeOptions()
-
+    # chrome_options.add_argument("--headless")
+    # Set path to chromedriver as per your configuration, change it to your path accordingly
     chrome_driver_path = r'C:\chromedriver_win32\chromedriver.exe'
-    driver = webdriver.Chrome( options=chrome_options)
+    driver = webdriver.Chrome(options=chrome_options)
     driver.get(place_url)
-
     # Add a delay for the page to load
     time.sleep(5)
 
     # Find the Reviews button and click it
     try:
         reviews_button = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//button[starts-with(@aria-label, "Reviews for") and @role="tab"]')))
+            EC.element_to_be_clickable((By.XPATH, '//button[starts-with(@aria-label, "Reviews for") and @role="tab"]')))
+        reviews_button.click()
+        time.sleep(2)
     except TimeoutException:
         print("No reviews to scrape. The location does not have any reviews.")
         driver.quit()
         return [], None, None
-
-    actions = ActionChains(driver)
-    actions.move_to_element(reviews_button).perform()
-    reviews_button.click()
-    time.sleep(2)
 
     # Get overall rating after clicking the Reviews button
     try:
@@ -208,7 +210,9 @@ def get_all_reviews(place_url):
         total_reviews_element = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.XPATH, '//div[@class="fontBodySmall" and contains(text(), "reviews")]'))
         )
-        total_reviews = int(total_reviews_element.text.split()[0])
+        total_reviews_text = total_reviews_element.text.split()[0]
+        total_reviews = int(total_reviews_text.replace(',', ''))
+        # total_reviews = int(total_reviews_element.text.split()[0])
         print(f"Overall rating: {rating_overall}\n")
         print(f"Total reviews: {total_reviews}\n")
     except TimeoutException:
@@ -219,13 +223,19 @@ def get_all_reviews(place_url):
     # Add a delay for the reviews to load
     time.sleep(5)
 
-    reviews = scrape_all_reviews(driver, total_reviews)
+    if number_reviews > total_reviews:
+        print("The specified number of reviews is greater than the total available reviews.")
+        number_reviews = total_reviews
+
+    reviews = scrape_all_reviews(driver, number_reviews)
 
     driver.quit()
+
     # If no reviews found...
     if len(reviews) == 0:
         return [], None, None
-    return reviews, rating_overall, total_reviews
+
+    return reviews, rating_overall, number_reviews
 
 
 @views.context_processor
@@ -243,29 +253,49 @@ def home():
     error_message = ''
     overall_rating = ''
     total_reviews = ''
+
     flash("Please wait for the reviews to be scraped.", category="success")
-    flash("The time it takes depends on how many reviews the place have.", category="success")
-    flash("Please double check the place url to confirm it's the right place you want to check", category="success")
+    flash("The time it takes depends on how many reviews the place has.", category="success")
+    flash("Please double-check the place URL to confirm it's the right place you want to check.", category="success")
+
     if request.method == 'POST':
         place_name = request.form.get('place_name')
-        place_id = get_place_id(place_name)
-        if place_id:
-            place_url = f'https://www.google.com/maps/place/?q=place_id:{place_id}'
-            print("Place url: ", place_url)
-            reviews, overall_rating, total_reviews = get_all_reviews(place_url)
-            flash("Scraping finished!")
-            if not reviews and overall_rating is None and total_reviews is None:
-                error_message = f"No reviews found for: {place_name}"
+        total_reviews = request.form.get('number_reviews')
+        if total_reviews is not None:
+            try:
+                total_reviews = int(total_reviews)
+            except ValueError:
+                flash("Invalid input for the number of reviews. Please enter a valid number.", category="error")
+                return redirect(url_for('views.home'))
 
+        if place_name and total_reviews is not None:
+            place_id = get_place_id(place_name)
+            if place_id:
+                place_url = f'https://www.google.com/maps/place/?q=place_id:{place_id}'
+                print("Place URL: ", place_url)
+                reviews, overall_rating, _ = get_all_reviews(place_url, total_reviews)
+                flash("Scraping finished!", category="success")
+
+                if not reviews and overall_rating is None:
+                    error_message = "No reviews found for the specified place."
+                else:
+                    total_available_reviews = len(reviews)
+                    if total_reviews and total_reviews > total_available_reviews:
+                        error_message = f"The specified number of reviews ({total_reviews}) is greater than the total number of available reviews ({total_available_reviews})."
+                        total_reviews = total_available_reviews
+                    reviews = reviews[:total_reviews]
+
+            else:
+                error_message = f"No place found for: {place_name}"
         else:
-            error_message = f"No place found for: {place_name}"
+            error_message = "Please enter a place name and the number of reviews you want to fetch."
 
         save_reviews(place_name, reviews)
         save_reviews_database(place_name, reviews)
 
     return render_template('home.html', place_name=place_name, place_id=place_id, place_url=place_url,
                            error_message=error_message, overall_rating=overall_rating, total_reviews=total_reviews,
-                           reviews=reviews )
+                           reviews=reviews)
 
 def save_reviews(place_name, reviews):
     try:

@@ -7,8 +7,10 @@
 <form method="POST" action="{{ url_for('views.home') }}">
   <div align="center" class="form-group">
     <br />
-    <input type="search" class="form-control" name="place_name" id="search"  placeholder="Please enter company name or address" aria-label="Search" />
-    <br />
+    <input type="search" class="form-control" name="place_name" id="search"
+           placeholder="Please enter company name or address" aria-label="Search" /><br />
+    <input type="number" class="form-control" id="number_reviews" name="number_reviews"
+               placeholder="Enter the number of reviews you want to scrape" required/><br />
     <button type="submit" class="btn btn-primary">Get Reviews</button>
   </div>
 </form>
@@ -38,7 +40,7 @@
 
     <!-- Reviews Section -->
     {% if reviews %}
-        <h2>Reviews:</h2>
+        <h2>Reviews for {{ place_name }}:</h2>
         <table>
           <thead>
               <tr>
