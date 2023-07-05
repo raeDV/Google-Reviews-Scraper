@@ -495,7 +495,7 @@ def sort_reviews():
     order = request.args.get('order')
 
     sort_options = {
-        'id': Reviews.id,
+        'id': Reviews.review_id,
         'place_name': Reviews.place_name,
         'reviewer': Reviews.reviewer,
         'rating': Reviews.rating,
