@@ -268,7 +268,10 @@ def get_all_reviews(place_url, number_reviews):
     # Add a delay for the reviews to load
     time.sleep(5)
 
-    number_reviews = total_reviews
+    if number_reviews > total_reviews:
+        print("The specified number of reviews is greater than the total available reviews.")
+        number_reviews = total_reviews
+
     reviews = scrape_all_reviews(driver, number_reviews)
 
     driver.quit()
@@ -295,21 +298,17 @@ def home():
         place_name = request.form.get('place_name')
         total_reviews = request.form.get('number_reviews')
 
-        if not place_name:
-            flash("Please enter a place name.")
+        if not place_name or not total_reviews:
+            flash("Please enter a place name and the number of reviews you want to scrape.")
         else:
-            if total_reviews == 'all':
-                total_reviews = None  # None indicates to scrape all reviews by default
-            else:
-                try:
-                    total_reviews = int(total_reviews)
-                    if total_reviews <= 0:
-                        flash("No. of reviews must be greater than zero.", category="error")
-                        return redirect(url_for('home'))
-                except ValueError:
-                    flash("Invalid input for the number of reviews. Please enter a valid number or 'all'.",
-                          category="error")
+            try:
+                total_reviews = int(total_reviews)
+                if total_reviews <= 0:
+                    flash("No. of reviews must be greater than zero.", category="error")
                     return redirect(url_for('home'))
+            except ValueError:
+                flash("Invalid input for the number of reviews. Please enter a valid number.", category="error")
+                return redirect(url_for('home'))
 
             place_id = get_place_id(place_name)
             if place_id:
@@ -322,9 +321,8 @@ def home():
                     error_message = "No reviews found for the specified place."
                 else:
                     total_available_reviews = len(reviews)
-                    if total_reviews is not None and total_reviews > total_available_reviews:
-                        flash(
-                            f"The specified number of reviews ({total_reviews}) is greater than the total number of available reviews ({total_available_reviews}).")
+                    if total_reviews > total_available_reviews:
+                        flash(f"The specified number of reviews ({total_reviews}) is greater than the total number of available reviews ({total_available_reviews}).")
                         total_reviews = total_available_reviews
                     reviews = reviews[:total_reviews]
 
