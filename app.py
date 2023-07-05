@@ -237,8 +237,7 @@ def get_all_reviews(place_url, number_reviews):
     # Find the Reviews button and click it
     try:
         reviews_button = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located(
-                (By.XPATH, '//button[starts-with(@aria-label, "Reviews for") and @role="tab"]')))
+            EC.presence_of_element_located((By.XPATH, '//button[starts-with(@aria-label, "Reviews for") and @role="tab"]')))
     except TimeoutException:
         print("No reviews to scrape. The location does not have any reviews.")
         driver.quit()
@@ -255,11 +254,9 @@ def get_all_reviews(place_url, number_reviews):
             EC.presence_of_element_located((By.XPATH, '//div[@class="fontDisplayLarge"]')))
         rating_overall = float(rating_overall_element.text)
         total_reviews_element = WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.XPATH, '//div[@class="fontBodySmall" and contains(text(), "reviews")]'))
-        )
+            EC.presence_of_element_located((By.XPATH, '//div[@class="fontBodySmall" and contains(text(), "reviews")]')))
         total_reviews_text = total_reviews_element.text.split()[0]
         total_reviews = int(total_reviews_text.replace(',', ''))
-        # total_reviews = int(total_reviews_element.text.split()[0])
         print(f"Overall rating: {rating_overall}\n")
         print(f"Total reviews: {total_reviews}\n")
     except TimeoutException:
@@ -267,7 +264,7 @@ def get_all_reviews(place_url, number_reviews):
         driver.quit()
         return [], None, None
 
-        # Add a delay for the reviews to load
+    # Add a delay for the reviews to load
     time.sleep(5)
 
     if number_reviews > total_reviews:
@@ -333,6 +330,7 @@ def home():
         try:
             for review_data in reviews:
                 review = Reviews(
+                    review_id=review_data['id'],
                     user_id=current_user.id,
                     place_name=place_name,
                     reviewer=review_data['reviewer'],

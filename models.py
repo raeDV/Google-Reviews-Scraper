@@ -17,7 +17,8 @@ class DBUser(db.Model):
 
 class Reviews(db.Model):
     __tablename__ = 'reviews'
-    id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer(), primary_key=True)
+    review_id = db.Column(db.Integer(), nullable=False)
     user_id = db.Column(db.Integer(), db.ForeignKey('users.id'), nullable=False)
     place_name = db.Column(db.Text(), nullable=False)
     reviewer = db.Column(db.Text(), nullable=False)
