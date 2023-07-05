@@ -2,6 +2,10 @@
 {% block title %}{{ super() }} - All Reviews{% endblock %}
 {% block content %}
 
+{% for message in get_flashed_messages() %}
+<br/>{{ message }}<br/>
+{% endfor %}
+
 <!-- Dropdown for sorting options -->
 <form action="{{ url_for('sort_reviews') }}" method="GET">
     <label for="sort_option">Sort By:</label>
