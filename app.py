@@ -475,16 +475,21 @@ def all_reviews():
 def delete_reviews():
     if 'review_ids' in request.form:
         review_ids = request.form.getlist('review_ids')
-        try:
-            deleted_reviews = Reviews.query.filter(Reviews.user_id == current_user.id,
-                                                   Reviews.id.in_(review_ids)).delete(synchronize_session=False)
-            db.session.commit()
-            flash(f"Successfully deleted {deleted_reviews} review(s).", category="success")
-            print(f"Successfully deleted {deleted_reviews} review(s).")
-        except Exception as e:
-            db.session.rollback()
-            flash("An error occurred while deleting the reviews.", category="error")
-            print(f"Error while deleting reviews: {e}")
+        if not review_ids:
+            flash("No reviews selected for deletion.", category="error")
+        else:
+            try:
+                deleted_reviews = Reviews.query.filter(Reviews.user_id == current_user.id,
+                                                       Reviews.id.in_(review_ids)).delete(synchronize_session=False)
+                db.session.commit()
+                flash(f"Successfully deleted {deleted_reviews} review(s).", category="success")
+                print(f"Successfully deleted {deleted_reviews} review(s).")
+            except Exception as e:
+                db.session.rollback()
+                flash("An error occurred while deleting the reviews.", category="error")
+                print(f"Error while deleting reviews: {e}")
+    else:
+        flash("No reviews selected for deletion.", category="error")
 
     return redirect(url_for('all_reviews'))
 
