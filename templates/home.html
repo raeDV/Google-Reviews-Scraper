@@ -9,6 +9,7 @@
 <!-- User Input Section -->
 <form method="POST">
     <input type="text" name="place_name" placeholder="Enter a place name">
+    <input type="number" name="number_reviews" placeholder="No. of desired Reviews"></br>
     <button type="submit">Scrape Reviews</button>
     <p style="color: red;">Note: Please double-check the place URL to confirm it's the right place you want to check.</p>
 
@@ -74,7 +75,7 @@
             <td>{{ review.reviewer }}</td>
             <td>{{ review.rating }}</td>
             <td>{{ review.review_time }}</td>
-            <td width="700px">{{ review.review_content }}</td>
+            <td width="500px">{{ review.review_content }}</td>
             <td>{{ review.owner_response }}</td>
         </tr>
         {% endfor %}
