@@ -37,7 +37,7 @@
         <table>
             <thead>
             <tr>
-                <th></th>
+                <th><input type="checkbox" id="check_all" onclick="toggleAllReviews(this.checked)"></th>
                 <th><a href="{{ url_for('sort_reviews', option='id', order='asc') }}">ID</a></th>
                 <th><a href="{{ url_for('sort_reviews', option='place_name', order='asc') }}">Place Name</a></th>
                 <th><a href="{{ url_for('sort_reviews', option='reviewer', order='asc') }}">Reviewer</a></th>

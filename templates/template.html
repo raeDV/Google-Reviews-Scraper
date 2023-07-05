@@ -140,7 +140,12 @@
             }).trigger('resize'); //on page load
         });
 
-
+        function toggleAllReviews(checked) {
+        var checkboxes = document.getElementsByName('review_ids');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = checked;
+        }
+    }
     </script>
 </head>
 
