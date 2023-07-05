@@ -237,7 +237,8 @@ def get_all_reviews(place_url, number_reviews):
     # Find the Reviews button and click it
     try:
         reviews_button = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.XPATH, '//button[starts-with(@aria-label, "Reviews for") and @role="tab"]')))
+            EC.presence_of_element_located(
+                (By.XPATH, '//button[starts-with(@aria-label, "Reviews for") and @role="tab"]')))
     except TimeoutException:
         print("No reviews to scrape. The location does not have any reviews.")
         driver.quit()
@@ -296,14 +297,19 @@ def home():
     if request.method == 'POST':
         place_name = request.form.get('place_name')
         total_reviews = request.form.get('number_reviews')
-        if total_reviews is not None:
+
+        if not place_name or not total_reviews:
+            flash("Please enter a place name and the number of reviews you want to scrape.")
+        else:
             try:
                 total_reviews = int(total_reviews)
+                if total_reviews <= 0:
+                    flash("No. of reviews must be greater than zero.", category="error")
+                    return redirect(url_for('home'))
             except ValueError:
                 flash("Invalid input for the number of reviews. Please enter a valid number.", category="error")
-                return redirect(url_for('views.home'))
+                return redirect(url_for('home'))
 
-        if place_name and total_reviews is not None:
             place_id = get_place_id(place_name)
             if place_id:
                 place_url = f'https://www.google.com/maps/place/?q=place_id:{place_id}'
@@ -315,20 +321,26 @@ def home():
                     error_message = "No reviews found for the specified place."
                 else:
                     total_available_reviews = len(reviews)
-                    if total_reviews and total_reviews > total_available_reviews:
+                    if total_reviews > total_available_reviews:
                         error_message = f"The specified number of reviews ({total_reviews}) is greater than the total number of available reviews ({total_available_reviews})."
                         total_reviews = total_available_reviews
                     reviews = reviews[:total_reviews]
 
             else:
                 error_message = f"No place found for: {place_name}"
-        else:
-            error_message = "Please enter a place name and the number of reviews you want to scrape."
 
-    # Save to Database and Write to CSV
+    # Save to Database
     if len(reviews) > 0:
         try:
             for review_data in reviews:
+                # Check if a review with the same review_id and place_name already exists in the database
+                existing_review = Reviews.query.filter_by(review_id=review_data['id'], place_name=place_name).first()
+
+                if existing_review:
+                    # Skip saving the review if a duplicate already exists
+                    continue
+
+                # Save the review to the database
                 review = Reviews(
                     review_id=review_data['id'],
                     user_id=current_user.id,
@@ -454,6 +466,53 @@ def account():
 @login_required
 def all_reviews():
     reviews = Reviews.query.filter_by(user_id=current_user.id).all()
+
+    return render_template('all_reviews.html', reviews=reviews)
+
+
+@app.route('/delete_reviews', methods=['POST'])
+@login_required
+def delete_reviews():
+    if 'review_ids' in request.form:
+        review_ids = request.form.getlist('review_ids')
+        try:
+            deleted_reviews = Reviews.query.filter(Reviews.user_id == current_user.id,
+                                                   Reviews.id.in_(review_ids)).delete(synchronize_session=False)
+            db.session.commit()
+            flash(f"Successfully deleted {deleted_reviews} review(s).", category="success")
+        except Exception as e:
+            db.session.rollback()
+            flash("An error occurred while deleting the reviews.", category="error")
+            print(f"Error while deleting reviews: {e}")
+
+    return redirect(url_for('home'))
+
+
+@app.route('/sort_reviews', methods=['GET'])
+@login_required
+def sort_reviews():
+    option = request.args.get('option')
+    order = request.args.get('order')
+
+    sort_options = {
+        'id': Reviews.id,
+        'place_name': Reviews.place_name,
+        'reviewer': Reviews.reviewer,
+        'rating': Reviews.rating,
+        'review_time': Reviews.review_time,
+        'review_content': Reviews.review_content,
+        'owner_response': Reviews.owner_response
+    }
+
+    if option in sort_options:
+        column = sort_options[option]
+        if order == 'desc':
+            column = column.desc()
+
+        reviews = Reviews.query.filter_by(user_id=current_user.id).order_by(column).all()
+    else:
+        reviews = Reviews.query.filter_by(user_id=current_user.id).all()
+
     return render_template('all_reviews.html', reviews=reviews)
 
 
