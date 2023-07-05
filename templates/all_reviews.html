@@ -32,6 +32,7 @@
         <table>
             <thead>
             <tr>
+                <th></th>
                 <th><a href="{{ url_for('sort_reviews', option='id', order='asc') }}">ID</a></th>
                 <th><a href="{{ url_for('sort_reviews', option='place_name', order='asc') }}">Place Name</a></th>
                 <th><a href="{{ url_for('sort_reviews', option='reviewer', order='asc') }}">Reviewer</a></th>
@@ -39,12 +40,12 @@
                 <th><a href="{{ url_for('sort_reviews', option='review_time', order='asc') }}">Review Time</a></th>
                 <th><a href="{{ url_for('sort_reviews', option='review_content', order='asc') }}">Review Content</a></th>
                 <th><a href="{{ url_for('sort_reviews', option='owner_response', order='asc') }}">Owner Response</a></th>
-                <th>Delete</th>
             </tr>
             </thead>
             <tbody>
             {% for review in reviews %}
             <tr>
+                <td><input type="checkbox" name="review_ids" value="{{ review.id }}"></td>
                 <td>{{ review.review_id }}</td>
                 <td>{{ review.place_name }}</td>
                 <td>{{ review.reviewer }}</td>
@@ -52,7 +53,6 @@
                 <td>{{ review.review_time }}</td>
                 <td width="500px">{{ review.review_content }}</td>
                 <td>{{ review.owner_response }}</td>
-                <td><input type="checkbox" name="review_ids" value="{{ review.id }}"></td>
             </tr>
             {% endfor %}
             </tbody>
