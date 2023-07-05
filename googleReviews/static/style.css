@@ -1,0 +1,116 @@
+@font-face {
+            font-family: "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana, Arial, sans-serif;
+            src: url("/static/res/ParalucentStencil-Medium.ttf");
+        }
+
+@font-face {
+    font-family: "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana, Arial, sans-serif;
+    src: url("/static/res/Paralucent-ExtraLight.ttf");
+}
+
+.formcenter table {
+    margin: 30px auto;
+}
+
+body {
+    background-color: #CCC;
+    margin-bottom: 0;
+    padding: 0;
+    font-family: "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana, Arial, sans-serif;
+}
+
+#header {
+    display: block;
+    background-color: #CCC;
+    text-align: center;
+    width: 100%;
+}
+
+#main {
+    display: block;
+    overflow-y: scroll;
+    background-color: #FFF;
+    background-attachment: fixed;
+    min-height: 100px;
+    background-image: url("/static/img/TileTex.png");
+    color: #650011;
+    text-align: center;
+    width: 100%
+}
+
+.button {
+    background-color: #FFF;
+    color: #650011;
+    border: 2px solid #00005A;
+    padding: 5px;
+    margin: 5px;
+    border-radius: 10px;
+    font-family: "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana, Arial, sans-serif;
+}
+
+.button a {
+    color: #650011;
+    text-decoration: none
+}
+
+.button a:hover {
+    color: #00005A
+}
+
+button {
+    font: inherit
+}
+
+button:hover {
+    color: #00005A
+}
+
+#header table {
+    margin: 10px;
+    display: inline-table
+}
+
+select {
+    margin: 5px 0;
+    width: 25ch;
+}
+
+input {
+    margin: 5px 0 5px 0;
+    resize: none;
+    width: 23.45ch
+}
+
+input, select {
+    padding: 5px;
+    color: #00005A;
+    font: inherit;
+}
+
+h1 {
+    font-family: ParaStencil,serif;
+    color: #650011;
+    font-weight: normal
+}
+
+h2 {
+    color: #00005A;
+    text-align: center;
+}
+
+p {
+    color: #00005A;
+    padding: 10px;
+    text-align: center;
+}
+
+.result td, th {
+    border: 1px solid black;
+    padding: 5px;
+}
+
+.result table {
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 20px;
+}

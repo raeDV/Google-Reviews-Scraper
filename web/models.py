@@ -10,7 +10,7 @@ class User(db.Model, UserMixin):
 
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    place = db.Column(db.String(100), nullable=False,unique=True)
+    place = db.Column(db.String(100), nullable=False)
     rating = db.Column(db.Float, nullable=False)
     comment = db.Column(db.Text, nullable=False)
     author_name = db.Column(db.String(100), nullable=False)

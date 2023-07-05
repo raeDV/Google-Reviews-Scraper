@@ -1,0 +1,40 @@
+{% extends "template.html" %}
+{% block title %}{{ super() }} - All Reviews{% endblock %}
+{% block content %}
+
+<!-- Review Table -->
+{% if reviews %}
+<h2>All Reviews:</h2>
+<div class="result">
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Place Name</th>
+            <th>Reviewer</th>
+            <th>Rating</th>
+            <th>Review Time</th>
+            <th>Review Content</th>
+            <th>Owner Response</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for review in reviews %}
+        <tr>
+            <td>{{ review.id  }}</td>
+            <td>{{ review.place_name }}</td>
+            <td>{{ review.username }}</td>
+            <td>{{ review.rating }}</td>
+            <td>{{ review.review_time }}</td>
+              <td width="500px">{{ review.review_content }}</td>
+            <td>{{ review.owner_response }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p>No reviews found.</p>
+{% endif %}
+
+{% endblock %}

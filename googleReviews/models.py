@@ -11,7 +11,7 @@ class User(db.Model, UserMixin):
 
 class Review(db.Model):
     id = db.Column(db.Integer, primary_key=True,autoincrement=True)
-    place_name = db.Column(db.String(100), nullable=False, unique=True)
+    place_name = db.Column(db.String(100), nullable=False)
     username = db.Column(db.String(100), nullable=False)
     rating = db.Column(db.Float, nullable=False)
     review_time = db.Column(db.String(100), nullable=False)

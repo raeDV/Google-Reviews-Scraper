@@ -254,9 +254,9 @@ def home():
     overall_rating = ''
     total_reviews = ''
 
-    flash("Please wait for the reviews to be scraped.", category="success")
-    flash("The time it takes depends on how many reviews the place has.", category="success")
-    flash("Please double-check the place URL to confirm it's the right place you want to check.", category="success")
+    # flash("Please wait for the reviews to be scraped.", category="success")
+    # flash("The time it takes depends on how many reviews the place has.", category="success")
+    # flash("Please double-check the place URL to confirm it's the right place you want to check.", category="success")
 
     if request.method == 'POST':
         place_name = request.form.get('place_name')
@@ -323,11 +323,12 @@ def save_reviews(place_name, reviews):
 
 
 def save_reviews_database(place_name, reviews):
-    # Get the latest review for the place, if it exists
-    existing_reviews = Review.query.filter_by(place_name=place_name).all()
+    # Remove existing reviews for the same place and user
+    existing_reviews = Review.query.filter_by(place_name=place_name, user_id=current_user.id).all()
     for existing_review in existing_reviews:
         db.session.delete(existing_review)
 
+    # Save the new reviews to the database
     for review in reviews:
         id = review['id']
         username = review['username']
@@ -336,29 +337,47 @@ def save_reviews_database(place_name, reviews):
         review_content = review['review_content']
         owner_response = review['owner_response']
 
-        existing_review = Review.query.filter_by(place_name=place_name).first()
-        if existing_review:
-            # Update the existing review with the new information
-            existing_review.username = username
-            existing_review.rating = rating
-            existing_review.review_time = review_time
-            existing_review.review_content = review_content
-            existing_review.owner_response = owner_response
-        else:
-            # Create a new review
-            new_review = Review(
-                place_name=place_name,
-                username=username,
-                rating=rating,
-                review_time=review_time,
-                review_content=review_content,
-                owner_response=owner_response,
-                user_id = current_user.id
-            )
-            db.session.add(new_review)
+        new_review = Review(
+            place_name=place_name,
+            username=username,
+            rating=rating,
+            review_time=review_time,
+            review_content=review_content,
+            owner_response=owner_response,
+            user_id=current_user.id
+        )
+        db.session.add(new_review)
 
-    db.session.commit()
-    print(f"Reviews for {place_name} saved to database.")
+    try:
+        # Commit the changes to the database
+        db.session.commit()
+        print(f"Reviews for {place_name} saved to the database.")
+    except Exception as e:
+        # Handle the exception
+        db.session.rollback()
+        print(f"Error saving reviews for {place_name}: {str(e)}")
+
+
+@views.route('/all_reviews', methods=['GET'])
+@login_required
+def all_reviews():
+    places = set()
+    latest_reviews = []
+    review_count = {}
+    # Get all reviews for the current user, ordered by place name and review time in descending order
+    reviews = Review.query.filter_by(user_id=current_user.id).order_by(Review.place_name,
+                                                                   Review.review_time.desc()).all()
+    for review in reviews:
+        if review.place_name not in places:
+            places.add(review.place_name)
+            review_count[review.place_name] = 1
+        else:
+            review_count[review.place_name] += 1
+        review.id = review_count[review.place_name]
+        latest_reviews.append(review)
+
+    return render_template('all_reviews.html', reviews=latest_reviews)
+
 
 
 
