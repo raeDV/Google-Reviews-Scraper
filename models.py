@@ -11,9 +11,6 @@ class DBUser(db.Model):
     phone = db.Column(db.Text())
     password = db.Column(db.Text(), nullable=False)
 
-    def __repr__(self):
-        return "<DBUser {}: {} {} >".format(self.username, self.email, self.phone)
-
 
 class Reviews(db.Model):
     __tablename__ = 'reviews'
@@ -26,17 +23,6 @@ class Reviews(db.Model):
     review_time = db.Column(db.Text(), nullable=False)
     review_content = db.Column(db.Text(), nullable=False)
     owner_response = db.Column(db.Text())
-
-    def __repr__(self):
-        return "<Reviews {}: {} {} >".format(self.user_id, self.reviewer, self.rating)
-
-    def save_to_db(self):
-        db.session.add(self)
-        db.session.commit()
-
-    def delete_from_db(self):
-        db.session.delete(self)
-        db.session.commit()
 
 
 def create_all(app):
