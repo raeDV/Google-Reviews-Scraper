@@ -18,6 +18,9 @@
                 <tr>
                     <td>{{ form.username.label }}</td>
                     <td>{{ form.username }}</td>
+                        {% for error in form.username.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}<br/>
                 </tr>
                 <tr>
                     <td>{{ form.email.label }}</td>
@@ -30,10 +33,16 @@
                 <tr>
                     <td>{{ form.password.label }}</td>
                     <td>{{ form.password }}</td>
+                        {% for error in form.password.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}<br/>
                 </tr>
                 <tr>
                     <td>{{ form.confirmPassword.label }}</td>
                     <td>{{ form.confirmPassword }}</td>
+                        {% for error in form.confirmPassword.errors %}
+                            <span class="error">{{ error }}</span>
+                        {% endfor %}
                 </tr>
                 <th>
                     <td>{{ form.submit }}</td>

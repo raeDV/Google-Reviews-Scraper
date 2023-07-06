@@ -13,13 +13,17 @@ class LoginForm(FlaskForm):
 class RegisterForm(FlaskForm):
     username = StringField('Username',
                            validators=[InputRequired(),
-                                       Length(4, 64),
+                                       Length(5, 64),
                                        Regexp('^[A-Za-z][A-Za-z0-9_.]*$', 0,
-                                              'Usernames must start with a letter and must have only letters, '
+                                              message='Usernames must start with a letter and must have only letters, '
                                               'numbers, dots or underscores')])
     email = EmailField('Email', validators=[InputRequired()])
     phone = StringField('Phone number', validators=[InputRequired()])
-    password = PasswordField('Password', validators=[InputRequired(), Length(8)])
+    password = PasswordField('Password', validators=[InputRequired(),
+                                                     Length(min=8),
+                                                     Regexp(r'^(?=.*[A-Z])(?=.*\d.*\d)(?=.*\W)[A-Za-z\d\W]{8,}$',
+                                                            message='Passwords must have 8 characters with a capital letter at the beginning, '
+                                                                    'at least 2 numbers, and at least 1 special character.')])
     confirmPassword = PasswordField('Confirm Password',
                                     validators=[InputRequired(),
                                                 EqualTo('password',

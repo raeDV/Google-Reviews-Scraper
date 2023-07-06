@@ -14,6 +14,7 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from sqlalchemy.exc import NoResultFound
@@ -195,14 +196,14 @@ def scrape_all_reviews(driver, number_reviews):
                 'owner_response': owner_response
             })
 
-            print(f"ID: {index}")
-            print(f"Reviewer: {reviewer}")
-            print(f"Rating: {rating}")
-            print(f"Review Time: {review_time_absolute}")
-            print(f"review_content: {review_content}")
-            # if owner_response is not None:
-            print(f"owner_response: {owner_response}")
-            print("\n")  # line break
+            # print(f"ID: {index}")
+            # print(f"Reviewer: {reviewer}")
+            # print(f"Rating: {rating}")
+            # print(f"Review Time: {review_time_absolute}")
+            # print(f"review_content: {review_content}")
+            # # if owner_response is not None:
+            # print(f"owner_response: {owner_response}")
+            # print("\n")  # line break
 
         except Exception as e:
             print("Problem occurred while processing a review.")
@@ -213,15 +214,15 @@ def scrape_all_reviews(driver, number_reviews):
 
 
 def get_all_reviews(place_url, number_reviews):
-    # Setup Firefox options
+    # Setup firefox options
     firefox_options = Options()
-    firefox_options.binary_location=r'C:\Program Files\Mozilla Firefox\firefox.exe'
+    # firefox_options.add_argument("--headless")
 
-    # Set path to chromedriver as per your configuration, change it to your path accordingly
-    chrome_driver_path = r'C:\Users\RAE\Downloads\geckodriver-v0.33.0-win-aarch64\geckodriver.exe'
+    # Set path to geckodriver as per your configuration, change it to your path accordingly
+    webdriver_service = Service(r'C:\Users\RAE\Downloads\geckodriver-v0.33.0-win64\geckodriver.exe')
 
-    # Choose Chrome Browser
-    driver = webdriver.Firefox(executable_path=r'C:\Users\RAE\Downloads\geckodriver-v0.33.0-win64\geckodriver.exe', options=firefox_options)
+    # Choose Firefox Browser
+    driver = webdriver.Firefox(service=webdriver_service, options=firefox_options)
     driver.get(place_url)
 
     # Add a delay for the page to load
@@ -460,7 +461,7 @@ def account():
 def all_reviews():
     reviews = Reviews.query.filter_by(user_id=current_user.id).all()
 
-    return render_template('all_reviews.html', reviews=reviews)
+    return render_template('all_reviews.html', reviews=reviews, place_name='')
 
 
 @app.route('/delete_reviews', methods=['POST'])
@@ -468,6 +469,7 @@ def all_reviews():
 def delete_reviews():
     if 'review_ids' in request.form:
         review_ids = request.form.getlist('review_ids')
+
         if not review_ids:
             flash("No reviews selected for deletion.", category="error")
         else:
@@ -477,6 +479,7 @@ def delete_reviews():
                 db.session.commit()
                 flash(f"Successfully deleted {deleted_reviews} review(s).", category="success")
                 print(f"Successfully deleted {deleted_reviews} review(s).")
+
             except Exception as e:
                 db.session.rollback()
                 flash("An error occurred while deleting the reviews.", category="error")
