@@ -3,15 +3,19 @@
 {% block content %}
 
 <style>
-    .min1-width-class {
-        min-width: 300px;
+    .review-width-class {
+        min-width: 400px;
     }
 
-    .min2-width-class {
-        min-width: 110px;
+    .time-width-class {
+        min-width: 95px;
     }
 
-    .max-width-class {
+    .reviewer-width-class {
+        min-width: 95px;
+    }
+
+    .response-width-class {
         min-width: 200px; max-width: 400px;
     }
 
@@ -23,7 +27,7 @@
 </style>
 
 {% for message in get_flashed_messages() %}
-<br/>{{ message }}<br/>
+<br/><strong>{{ message }}</strong><br/>
 {% endfor %}
 
 <!-- User Input Section -->
@@ -83,12 +87,12 @@
         {% for review in reviews %}
         <tr>
             <td>{{ review.id }}</td>
-            <td>{{ review.reviewer }}</td>
+            <td class="reviewer-width-class">{{ review.reviewer }}</td>
             <td>{{ review.rating }}</td>
-            <td class="min2-width-class">{{ review.review_time }}</td>
+            <td class="time-width-class">{{ review.review_time }}</td>
             <!-- <td width="500px">{{ review.review_content }}</td> -->
-            <td class="min1-width-class">{{ review.review_content }}</td>
-            <td class="max-width-class">{{ review.owner_response }}</td>
+            <td class="review-width-class">{{ review.review_content }}</td>
+            <td class="response-width-class">{{ review.owner_response }}</td>
         </tr>
         {% endfor %}
         </tbody>

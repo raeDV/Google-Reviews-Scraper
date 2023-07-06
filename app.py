@@ -31,7 +31,8 @@ login_manager.login_view = 'login'
 app.config['SQLALCHEMY_DATABASE_URI'] = r'sqlite:///users.sqlite'
 app.config['DEBUG'] = True
 db.init_app(app)
-gmaps = googlemaps.Client(key='AIzaSyDMNj_iWsB2-HoZT_grWBjZyqD4KsmR0aU')
+# Replace 'Your_API_Key' with your real google API key for testing
+gmaps = googlemaps.Client(key='Your_API_Key')
 app.secret_key = os.environ.get('SECRET_KEY', 'fallback_secret_key_if_env_var_not_set')
 
 if not os.path.isfile("users.sqlite"):
@@ -114,11 +115,11 @@ def get_place_id(place_name):
             return place_id, official_place_name
         else:
             print(f"No place found for: {place_name}")
-            return None, None
+            return None, place_name
     except Exception as e:
         print(f"Error occurred while fetching place_id for: {place_name}")
         print(f"Exception: {e}")
-        return None, None
+        return None, place_name
 
 
 def scrape_all_reviews(driver, number_reviews):
@@ -333,7 +334,6 @@ def home():
 
     if request.method == 'POST':
         place_name = request.form.get('place_name')
-        place_id, place_name = get_place_id(place_name)
         total_reviews = request.form.get('number_reviews')
 
         if not place_name or not total_reviews:
@@ -348,6 +348,7 @@ def home():
                 flash("Invalid input for the number of reviews. Please enter a valid number.", category="error")
                 return redirect(url_for('home'))
 
+            place_id, place_name = get_place_id(place_name)
             if place_id:
                 place_url = f'https://www.google.com/maps/place/?q=place_id:{place_id}'
                 print("Place URL: ", place_url)
@@ -355,7 +356,8 @@ def home():
                 flash("Scraping finished!", category="success")
 
                 if not reviews and overall_rating is None:
-                    flash("No reviews found for the specified place.")
+                    total_reviews = 0
+                    flash(f"No reviews found for: {place_name}")
                 else:
                     total_available_reviews = len(reviews)
                     if total_reviews > total_available_reviews:
@@ -364,6 +366,7 @@ def home():
                     reviews = reviews[:total_reviews]
 
             else:
+                total_reviews = 0
                 flash(f"No place found for: {place_name}")
 
     # Save to Database

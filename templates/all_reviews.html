@@ -2,6 +2,34 @@
 {% block title %}{{ super() }} - All Reviews{% endblock %}
 {% block content %}
 
+<style>
+    .review-width-class {
+        min-width: 400px;
+    }
+
+    .time-width-class {
+        min-width: 95px;
+    }
+
+    .place-width-class {
+        min-width: 120px;
+    }
+
+    .reviewer-width-class {
+        max-width: 95px;
+    }
+
+    .response-width-class {
+        min-width: 200px; max-width: 300px;
+    }
+
+    .center-container {
+        width: 95%;
+        max-width: 1600px;
+        margin: auto;
+    }
+</style>
+
 {% for message in get_flashed_messages() %}
 <br/>{{ message }}<br/>
 {% endfor %}
@@ -33,7 +61,7 @@
 
     <h2>All Reviews:</h2>
     <button type="submit">Delete Selected Reviews</button></br></br>
-    <div class="result">
+    <div class="result center-container">
         <table>
             <thead>
             <tr>
@@ -51,13 +79,13 @@
             {% for review in reviews %}
             <tr>
                 <td width="30px"><input type="checkbox" name="review_ids" value="{{ review.id }}"></td>
-                <td>{{ review.review_id }}</td>
-                <td>{{ review.place_name }}</td>
-                <td>{{ review.reviewer }}</td>
+                <td>{{ review.id }}</td>
+                <td class="place-width-class">{{ review.place_name }}</td>
+                <td class="reviewer-width-class">{{ review.reviewer }}</td>
                 <td>{{ review.rating }}</td>
-                <td>{{ review.review_time }}</td>
-                <td width="500px">{{ review.review_content }}</td>
-                <td>{{ review.owner_response }}</td>
+                <td class="time-width-class">{{ review.review_time }}</td>
+                <td class="review-width-class">{{ review.review_content }}</td>
+                <td class="response-width-class">{{ review.owner_response }}</td>
             </tr>
             {% endfor %}
             </tbody>
