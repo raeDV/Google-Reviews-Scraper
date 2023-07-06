@@ -260,7 +260,7 @@ def get_all_reviews(place_url, number_reviews):
         return [], None, None
 
     # Add a delay for the reviews to load
-    time.sleep(5)
+    time.sleep(2)
 
     if number_reviews > total_reviews:
         print("The specified number of reviews is greater than the total available reviews.")
