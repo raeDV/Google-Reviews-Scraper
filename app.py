@@ -120,23 +120,20 @@ def get_place_id(place_name):
 
 def scrape_all_reviews(driver, number_reviews):
     reviews = []
-    review_selector = "//div[contains(@class, 'jftiEf fontBodyMedium ')]"
-    scraped_count = 0
 
+    review_selector = "//div[contains(@class, 'jftiEf fontBodyMedium ')]"
+
+    scraped_count = 0
     while scraped_count < number_reviews:
         current_reviews = driver.find_elements(By.XPATH, review_selector)
-
-        # Scroll page to load more reviews if no reviews are found
         if not current_reviews:
-            driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
+            print("No reviews found. Waiting for the reviews to load...")
             time.sleep(2)
             continue
 
-        # Scroll page to load more reviews if the number of reviews found is less than the desired number
-        if scraped_count < number_reviews and len(current_reviews) < number_reviews:
-            driver.execute_script('arguments[0].scrollIntoView(true);', current_reviews[-1])
-            time.sleep(2)
-            continue
+        # Scroll page to load more reviews
+        driver.execute_script('arguments[0].scrollIntoView(true);', current_reviews[-1])
+        time.sleep(2)
 
         # Check if there are owner's responses and scroll to the end of them
         for review in current_reviews:
@@ -151,16 +148,12 @@ def scrape_all_reviews(driver, number_reviews):
 
         new_reviews = driver.find_elements(By.XPATH, review_selector)
         scraped_count = len(new_reviews)
-        print(f"{scraped_count}/{number_reviews} reviews scraped, in progress...")
-
-        # Break the loop if the desired number of reviews is reached
-        if scraped_count >= number_reviews:
-            break
+        print(f"{scraped_count-10}/{number_reviews} reviews scraped, in progress...")
 
     print(f"{scraped_count}/{number_reviews} reviews scraped, done.\n")
 
     # Parse each review
-    for index, review in enumerate(new_reviews[:number_reviews], start=1):
+    for index, review in enumerate(new_reviews, start=1):
         try:
             reviewer = review.find_element(By.XPATH, ".//div[contains(@class, 'd4r55 ')]").text
             rating_html = review.find_element(By.XPATH, ".//span[contains(@class, 'kvMYJc')]").get_attribute(
@@ -203,13 +196,14 @@ def scrape_all_reviews(driver, number_reviews):
                 'owner_response': owner_response
             })
 
-            # print(f"ID: {index}")
-            # print(f"Reviewer: {reviewer}")
-            # print(f"Rating: {rating}")
-            # print(f"Review Time: {review_time_absolute}")
-            # print(f"review_content: {review_content}")
-            # print(f"owner_response: {owner_response}")
-            # print("\n")  # line break
+            print(f"ID: {index}")
+            print(f"Reviewer: {reviewer}")
+            print(f"Rating: {rating}")
+            print(f"Review Time: {review_time_absolute}")
+            print(f"review_content: {review_content}")
+            # if owner_response is not None:
+            print(f"owner_response: {owner_response}")
+            print("\n")  # line break
 
         except Exception as e:
             print("Problem occurred while processing a review.")
@@ -236,7 +230,7 @@ def get_all_reviews(place_url, number_reviews):
 
     # Find the Reviews button and click it
     try:
-        reviews_button = WebDriverWait(driver, 10).until(
+        reviews_button = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located(
                 (By.XPATH, '//button[starts-with(@aria-label, "Reviews for") and @role="tab"]')))
     except TimeoutException:
@@ -251,10 +245,10 @@ def get_all_reviews(place_url, number_reviews):
 
     # Get overall rating after clicking the Reviews button
     try:
-        rating_overall_element = WebDriverWait(driver, 10).until(
+        rating_overall_element = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.XPATH, '//div[@class="fontDisplayLarge"]')))
         rating_overall = float(rating_overall_element.text)
-        total_reviews_element = WebDriverWait(driver, 20).until(
+        total_reviews_element = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.XPATH, '//div[@class="fontBodySmall" and contains(text(), "reviews")]')))
         total_reviews_text = total_reviews_element.text.split()[0]
         total_reviews = int(total_reviews_text.replace(',', ''))
