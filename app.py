@@ -1,19 +1,18 @@
 import csv
-import json
 import os
 import re
-import sqlite3
 import time
 from datetime import datetime, timedelta
 
 import bcrypt
 import googlemaps
 from bs4 import BeautifulSoup
-from flask import Flask, request, render_template, redirect, url_for, flash, jsonify, g
+from flask import Flask, request, render_template, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.firefox.options import Options
+from webdriver_manager.firefox import GeckoDriverManager
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -221,14 +220,15 @@ def scrape_all_reviews(driver, number_reviews):
 
 
 def get_all_reviews(place_url, number_reviews):
-    # Setup Chrome options
-    chrome_options = Options()
+    # Setup Firefox options
+    firefox_options = Options()
+    firefox_options.binary_location=r'C:\Program Files\Mozilla Firefox\firefox.exe'
 
     # Set path to chromedriver as per your configuration, change it to your path accordingly
-    chrome_driver_path = r'C:\Users\RAE\chromedriver_win32\chromedriver.exe'
+    chrome_driver_path = r'C:\Users\RAE\Downloads\geckodriver-v0.33.0-win-aarch64\geckodriver.exe'
 
     # Choose Chrome Browser
-    driver = webdriver.Chrome(executable_path=chrome_driver_path, options=chrome_options)
+    driver = webdriver.Firefox(executable_path=r'C:\Users\RAE\Downloads\geckodriver-v0.33.0-win64\geckodriver.exe', options=firefox_options)
     driver.get(place_url)
 
     # Add a delay for the page to load
