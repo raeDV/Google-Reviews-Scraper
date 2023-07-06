@@ -203,13 +203,13 @@ def scrape_all_reviews(driver, number_reviews):
                 'owner_response': owner_response
             })
 
-            print(f"ID: {index}")
-            print(f"Reviewer: {reviewer}")
-            print(f"Rating: {rating}")
-            print(f"Review Time: {review_time_absolute}")
-            print(f"review_content: {review_content}")
-            print(f"owner_response: {owner_response}")
-            print("\n")  # line break
+            # print(f"ID: {index}")
+            # print(f"Reviewer: {reviewer}")
+            # print(f"Rating: {rating}")
+            # print(f"Review Time: {review_time_absolute}")
+            # print(f"review_content: {review_content}")
+            # print(f"owner_response: {owner_response}")
+            # print("\n")  # line break
 
         except Exception as e:
             print("Problem occurred while processing a review.")
