@@ -11,10 +11,9 @@ from flask import Flask, request, render_template, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from selenium.webdriver.firefox.options import Options
-from webdriver_manager.firefox import GeckoDriverManager
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from sqlalchemy.exc import NoResultFound
@@ -312,7 +311,7 @@ def home():
                 flash("Scraping finished!", category="success")
 
                 if not reviews and overall_rating is None:
-                    error_message = "No reviews found for the specified place."
+                    flash("No reviews found for the specified place.")
                 else:
                     total_available_reviews = len(reviews)
                     if total_reviews > total_available_reviews:
@@ -321,7 +320,7 @@ def home():
                     reviews = reviews[:total_reviews]
 
             else:
-                error_message = f"No place found for: {place_name}"
+                flash(f"No place found for: {place_name}")
 
     # Save to Database
     if len(reviews) > 0:
