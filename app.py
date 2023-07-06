@@ -7,20 +7,22 @@ from datetime import datetime, timedelta
 import bcrypt
 import googlemaps
 from bs4 import BeautifulSoup
-from flask import Flask, request, render_template, redirect, url_for, flash, jsonify
+from flask import Flask, request, render_template, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
 from sqlalchemy.exc import NoResultFound
 
 from forms import LoginForm, RegisterForm, AccountForm
 from models import db, DBUser, Reviews, create_all
+import random
 
 app = Flask(__name__)
 login_manager = LoginManager()
@@ -29,8 +31,7 @@ login_manager.login_view = 'login'
 app.config['SQLALCHEMY_DATABASE_URI'] = r'sqlite:///users.sqlite'
 app.config['DEBUG'] = True
 db.init_app(app)
-# Replace 'Your_API_Key' with your real google API key for testing
-gmaps = googlemaps.Client(key='Your_API_Key')
+gmaps = googlemaps.Client(key='AIzaSyDMNj_iWsB2-HoZT_grWBjZyqD4KsmR0aU')
 app.secret_key = os.environ.get('SECRET_KEY', 'fallback_secret_key_if_env_var_not_set')
 
 if not os.path.isfile("users.sqlite"):
@@ -120,44 +121,75 @@ def get_place_id(place_name):
         return None, None
 
 
-def scrape_all_reviews(driver, total_reviews):
+def scrape_all_reviews(driver, number_reviews):
     reviews = []
 
     review_selector = "//div[contains(@class, 'jftiEf fontBodyMedium ')]"
-
     scraped_count = 0
-    while scraped_count < total_reviews:
+    last_processed = None
+
+    # Counters to stop the loop in case of no progress
+    no_progress_count = 0
+    max_no_progress_attempts = 20  # Or any other number you find suitable
+
+    while scraped_count < number_reviews:
         current_reviews = driver.find_elements(By.XPATH, review_selector)
         if not current_reviews:
             print("No reviews found. Waiting for the reviews to load...")
-            time.sleep(2)
+            time.sleep(random.uniform(0.1, 0.5))
             continue
 
-        # Scroll page to load more reviews
-        driver.execute_script('arguments[0].scrollIntoView(true);', current_reviews[-1])
-        time.sleep(2)
+        # Scroll to the last review
+        driver.execute_script("arguments[0].scrollIntoView();", current_reviews[-1])
+
+        time.sleep(random.uniform(0.1, 0.5))
 
         # Check if there are owner's responses and scroll to the end of them
-        for review in current_reviews:
-            try:
-                owner_response_elem = review.find_element(By.XPATH, ".//span[text()='Response from the owner']"
-                                                                    "/following::div[@class='wiI7pd'][1]")
-                driver.execute_script('arguments[0].scrollIntoView(true);', owner_response_elem)
-                time.sleep(1)
-            except NoSuchElementException:
-                # No owner response, continue to the next review
-                continue
+        try:
+            owner_response_elem = current_reviews[-1].find_element(By.XPATH, ".//span[text()='Response from the owner']"
+                                                                            "/following::div[@class='wiI7pd'][1]")
+            scroll_height_before = driver.execute_script('return document.documentElement.scrollHeight;')
+            driver.execute_script("arguments[0].scrollIntoView();", owner_response_elem)
+
+            time.sleep(random.uniform(0.1, 0.5))
+
+            scroll_height_after = driver.execute_script('return document.documentElement.scrollHeight;')
+
+            if scroll_height_before == scroll_height_after:
+                # If the page did not scroll down after trying to scroll to the owner's response, scroll down a bit more
+                actions = ActionChains(driver)
+                actions.send_keys(Keys.PAGE_DOWN)
+                actions.perform()
+
+                time.sleep(random.uniform(0.1, 0.5))
+        except NoSuchElementException:
+            # No owner response, continue to the next review
+            pass
 
         new_reviews = driver.find_elements(By.XPATH, review_selector)
-        scraped_count = len(new_reviews)
-        print(f"{scraped_count}/{total_reviews} reviews scraped, in progress...")
+        new_scraped_count = len(new_reviews)
 
-    print(f"{scraped_count}/{total_reviews} reviews scraped, done.\n")
+        # Check if there is any progress
+        if new_scraped_count > scraped_count:
+            # If progress, reset the no progress counter and print the progress
+            no_progress_count = 0
+            scraped_count = new_scraped_count
+            print(f"{scraped_count}/{number_reviews} reviews scraped, in progress...")
+        else:
+            # If no progress, increment the no progress counter
+            no_progress_count += 1
+
+        # If no progress for max_no_progress_attempts attempts, break the loop and save the already scraped reviews
+        if no_progress_count >= max_no_progress_attempts:
+            print(f"Scraping stopped due to no progress. {scraped_count} reviews scraped.")
+            break
+
+    print(f"{scraped_count}/{number_reviews} reviews scraped, done.\n")
 
     # Parse each review
     for index, review in enumerate(new_reviews, start=1):
         try:
-            username = review.find_element(By.XPATH, ".//div[contains(@class, 'd4r55 ')]").text
+            reviewer = review.find_element(By.XPATH, ".//div[contains(@class, 'd4r55 ')]").text
             rating_html = review.find_element(By.XPATH, ".//span[contains(@class, 'kvMYJc')]").get_attribute(
                 'innerHTML')
             rating_soup = BeautifulSoup(rating_html, 'html.parser')
@@ -191,19 +223,20 @@ def scrape_all_reviews(driver, total_reviews):
 
             reviews.append({
                 'id': index,
-                'username': username,
+                'reviewer': reviewer,
                 'rating': rating,
                 'review_time': review_time_absolute,
                 'review_content': review_content,
                 'owner_response': owner_response
             })
 
+            # No need to print the json since we already have showing them on front end.
+            # And we have csv version. Printing them waste time and console space
             # print(f"ID: {index}")
-            # print(f"Username: {username}")
+            # print(f"Reviewer: {reviewer}")
             # print(f"Rating: {rating}")
             # print(f"Review Time: {review_time_absolute}")
             # print(f"review_content: {review_content}")
-            # if owner_response is not None:
             # print(f"owner_response: {owner_response}")
             # print("\n")  # line break
 
@@ -215,7 +248,7 @@ def scrape_all_reviews(driver, total_reviews):
     return reviews
 
 
-def get_all_reviews(place_url):
+def get_all_reviews(place_url, number_reviews):
     # Setup firefox options
     firefox_options = Options()
     # firefox_options.add_argument("--headless")
@@ -228,11 +261,11 @@ def get_all_reviews(place_url):
     driver.get(place_url)
 
     # Add a delay for the page to load
-    time.sleep(6)
+    time.sleep(5)
 
     # Find the Reviews button and click it
     try:
-        reviews_button = WebDriverWait(driver, 10).until(
+        reviews_button = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located(
                 (By.XPATH, '//button[starts-with(@aria-label, "Reviews for") and @role="tab"]')))
     except TimeoutException:
@@ -247,13 +280,13 @@ def get_all_reviews(place_url):
 
     # Get overall rating after clicking the Reviews button
     try:
-        rating_overall_element = WebDriverWait(driver, 10).until(
+        rating_overall_element = WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.XPATH, '//div[@class="fontDisplayLarge"]')))
         rating_overall = float(rating_overall_element.text)
-        total_reviews_element = WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.XPATH, '//div[@class="fontBodySmall" and contains(text(), "reviews")]'))
-        )
-        total_reviews = int(total_reviews_element.text.split()[0].replace(',', ''))
+        total_reviews_element = WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.XPATH, '//div[@class="fontBodySmall" and contains(text(), "reviews")]')))
+        total_reviews_text = total_reviews_element.text.split()[0]
+        total_reviews = int(total_reviews_text.replace(',', ''))
         print(f"Overall rating: {rating_overall}\n")
         print(f"Total reviews: {total_reviews}\n")
     except TimeoutException:
@@ -262,16 +295,21 @@ def get_all_reviews(place_url):
         return [], None, None
 
     # Add a delay for the reviews to load
-    time.sleep(3)
+    time.sleep(2)
 
-    reviews = scrape_all_reviews(driver, total_reviews)
+    if number_reviews > total_reviews:
+        print("The specified number of reviews is greater than the total available reviews.")
+        number_reviews = total_reviews
+
+    reviews = scrape_all_reviews(driver, number_reviews)
 
     driver.quit()
 
     # If no reviews found...
     if len(reviews) == 0:
         return [], None, None
-    return reviews, rating_overall, total_reviews
+
+    return reviews, rating_overall, number_reviews
 
 
 def format_filename(official_place_name, overall_rating, total_reviews):
@@ -296,44 +334,91 @@ def home():
     if request.method == 'POST':
         place_name = request.form.get('place_name')
         place_id, place_name = get_place_id(place_name)
-        if place_id:
-            place_url = f'https://www.google.com/maps/place/?q=place_id:{place_id}'
-            print("Place url: ", place_url)
-            flash("Please wait for the reviews to be scraped. \n"
-                  "The time it takes depends on how many reviews the place have.")
-            reviews, overall_rating, total_reviews = get_all_reviews(place_url)
-            flash("Scraping finished!")
-            if not reviews and overall_rating is None and total_reviews is None:
-                error_message = f"No reviews found for: {place_name}"
+        total_reviews = request.form.get('number_reviews')
 
+        if not place_name or not total_reviews:
+            flash("Please enter a place name and the number of reviews you want to scrape.")
         else:
-            error_message = f"No place found for: {place_name}"
+            try:
+                total_reviews = int(total_reviews)
+                if total_reviews <= 0:
+                    flash("No. of reviews must be greater than zero.", category="error")
+                    return redirect(url_for('home'))
+            except ValueError:
+                flash("Invalid input for the number of reviews. Please enter a valid number.", category="error")
+                return redirect(url_for('home'))
+
+            if place_id:
+                place_url = f'https://www.google.com/maps/place/?q=place_id:{place_id}'
+                print("Place URL: ", place_url)
+                reviews, overall_rating, _ = get_all_reviews(place_url, total_reviews)
+                flash("Scraping finished!", category="success")
+
+                if not reviews and overall_rating is None:
+                    flash("No reviews found for the specified place.")
+                else:
+                    total_available_reviews = len(reviews)
+                    if total_reviews > total_available_reviews:
+                        flash(f"The specified number of reviews ({total_reviews}) is greater than the total number of available reviews ({total_available_reviews}).")
+                        total_reviews = total_available_reviews
+                    reviews = reviews[:total_reviews]
+
+            else:
+                flash(f"No place found for: {place_name}")
+
+    # Save to Database
+    if len(reviews) > 0:
+        try:
+            for review_data in reviews:
+                # Check if a review with the same review_id and place_name already exists in the database
+                existing_review = Reviews.query.filter_by(review_id=review_data['id'], place_name=place_name).first()
+
+                if existing_review:
+                    # Skip saving the review if a duplicate already exists
+                    continue
+
+                # Save the review to the database
+                review = Reviews(
+                    review_id=review_data['id'],
+                    user_id=current_user.id,
+                    place_name=place_name,
+                    reviewer=review_data['reviewer'],
+                    rating=review_data['rating'],
+                    review_time=review_data['review_time'],
+                    review_content=review_data['review_content'],
+                    owner_response=review_data['owner_response']
+                )
+                db.session.add(review)
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error while saving review in the database: {e}")
 
         # Write to CSV
         try:
-            if len(reviews) > 0:
-                # Specify the folder path
-                folder = 'output_data'
+            # Specify the folder path
+            folder = 'output_data'
 
-                # Create the folder if it doesn't exist
-                os.makedirs(folder, exist_ok=True)
+            # Create the folder if it doesn't exist
+            os.makedirs(folder, exist_ok=True)
 
-                filename = format_filename(place_name, overall_rating, total_reviews)
-                filepath = os.path.join(folder, filename)
+            filename = format_filename(place_name, overall_rating, total_reviews)
+            filepath = os.path.join(folder, filename)
 
-                with open(filepath, 'w', newline='', encoding='utf-8') as file:
-                    writer = csv.writer(file)
-                    writer.writerow(["ID", "Username", "Rating", "Review Time", "Review Content", "Owner Response"])
+            with open(filepath, 'w', newline='', encoding='utf-8') as file:
+                writer = csv.writer(file)
+                writer.writerow(["ID", "Reviewer", "Rating", "Review Time", "Review Content", "Owner Response"])
 
-                    for review in reviews:
-                        writer.writerow([
-                            review['id'],
-                            review['username'],
-                            review['rating'],
-                            review['review_time'],
-                            review['review_content'],
-                            review['owner_response']
-                        ])
+                for review in reviews:
+                    writer.writerow([
+                        review['id'],
+                        review['reviewer'],
+                        review['rating'],
+                        review['review_time'],
+                        review['review_content'],
+                        review['owner_response'] if review['owner_response'] is not None else "None"
+                    ])
+
             print(f"Reviews exported to {filepath}")
         except Exception as e:
             print(f"Error while writing to file: {e}")
@@ -341,38 +426,6 @@ def home():
     return render_template('home.html', place_name=place_name, place_id=place_id, place_url=place_url,
                            error_message=error_message, overall_rating=overall_rating, total_reviews=total_reviews,
                            reviews=reviews)
-
-
-def save_reviews_to_database(user_id, place_name, reviews):
-    for review in reviews:
-        db_review = Reviews(
-            id=review['id'],
-            user_id=user_id,
-            reviewer=review['username'],
-            rating=review['rating'],
-            date=review['review_time'],
-            comments=review['review_content'],
-            owner_response=review['owner_response'],
-            place_name=place_name
-        )
-        db.session.add(db_review)
-
-    db.session.commit()
-    flash('Reviews saved successfully.')
-
-
-@app.route('/save-reviews', methods=['POST'])
-@login_required
-def save_reviews():
-    if request.method == 'POST':
-        user_id = current_user.id  # Get the current user's ID
-        place_name = request.form.get('place')  # Get the place name from the form
-        reviews = get_all_reviews(place_name)
-
-        # Call the function to save the reviews to the database
-        save_reviews_to_database(user_id, place_name, reviews)
-
-    return redirect('/')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -444,6 +497,66 @@ def account():
             flash('Incorrect old password. Please try again.')
 
     return render_template('account.html', form=form)
+
+
+@app.route('/all_reviews', methods=['GET'])
+@login_required
+def all_reviews():
+    reviews = Reviews.query.filter_by(user_id=current_user.id).all()
+
+    return render_template('all_reviews.html', reviews=reviews)
+
+
+@app.route('/delete_reviews', methods=['POST'])
+@login_required
+def delete_reviews():
+    if 'review_ids' in request.form:
+        review_ids = request.form.getlist('review_ids')
+        if not review_ids:
+            flash("No reviews selected for deletion.", category="error")
+        else:
+            try:
+                deleted_reviews = Reviews.query.filter(Reviews.user_id == current_user.id,
+                                                       Reviews.id.in_(review_ids)).delete(synchronize_session=False)
+                db.session.commit()
+                flash(f"Successfully deleted {deleted_reviews} review(s).", category="success")
+                print(f"Successfully deleted {deleted_reviews} review(s).")
+            except Exception as e:
+                db.session.rollback()
+                flash("An error occurred while deleting the reviews.", category="error")
+                print(f"Error while deleting reviews: {e}")
+    else:
+        flash("No reviews selected for deletion.", category="error")
+
+    return redirect(url_for('all_reviews'))
+
+
+@app.route('/sort_reviews', methods=['GET'])
+@login_required
+def sort_reviews():
+    option = request.args.get('option')
+    order = request.args.get('order')
+
+    sort_options = {
+        'id': Reviews.review_id,
+        'place_name': Reviews.place_name,
+        'reviewer': Reviews.reviewer,
+        'rating': Reviews.rating,
+        'review_time': Reviews.review_time,
+        'review_content': Reviews.review_content,
+        'owner_response': Reviews.owner_response
+    }
+
+    if option in sort_options:
+        column = sort_options[option]
+        if order == 'desc':
+            column = column.desc()
+
+        reviews = Reviews.query.filter_by(user_id=current_user.id).order_by(column).all()
+    else:
+        reviews = Reviews.query.filter_by(user_id=current_user.id).all()
+
+    return render_template('all_reviews.html', reviews=reviews)
 
 
 if __name__ == '__main__':

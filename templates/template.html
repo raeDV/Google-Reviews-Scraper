@@ -5,24 +5,24 @@
     <title>{% block title %}Google Reviews Scraper{% endblock %}</title>
     <style>
         @font-face {
-            font-family: ParaStencil;
+            font-family: "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana, Arial, sans-serif;
             src: url("/static/res/ParalucentStencil-Medium.ttf");
         }
 
         @font-face {
-            font-family: ParaExtraLight;
+            font-family: "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana, Arial, sans-serif;
             src: url("/static/res/Paralucent-ExtraLight.ttf");
         }
 
         .formcenter table {
-            margin: 30px auto;
+            margin: 15px auto;
         }
 
         body {
             background-color: #CCC;
-            margin: 0;
+            margin-bottom: 0;
             padding: 0;
-            font-family: ParaExtraLight;
+            font-family: "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana, Arial, sans-serif;
         }
 
         #header {
@@ -30,7 +30,6 @@
             background-color: #CCC;
             text-align: center;
             width: 100%;
-            text-align: center
         }
 
         #main {
@@ -52,7 +51,7 @@
             padding: 5px;
             margin: 5px;
             border-radius: 10px;
-            font-family: ParaStencil
+            font-family: "Roboto", "Lucida Grande", "DejaVu Sans", "Bitstream Vera Sans", Verdana, Arial, sans-serif;
         }
 
         .button a {
@@ -84,8 +83,6 @@
 
         input {
             margin: 5px 0 5px 0;
-            resize: none;
-            width: 23.45ch
         }
 
         input, select {
@@ -107,17 +104,27 @@
 
         p {
             color: #00005A;
-            padding: 10px;
-            text-align: justify;
+            padding: 5px;
+            text-align: center;
         }
 
-        .result td, th {
+        .result td{
             border: 1px solid black;
+            padding: 5px;
         }
 
         .result table {
             margin-left: auto;
             margin-right: auto;
+            margin-bottom: 20px;
+        }
+
+        form {
+            margin-top: 10px;
+        }
+
+        th {
+            padding: 5px;
         }
 
     </style>
@@ -133,14 +140,19 @@
             }).trigger('resize'); //on page load
         });
 
-
+        function toggleAllReviews(checked) {
+        var checkboxes = document.getElementsByName('review_ids');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = checked;
+        }
+    }
     </script>
 </head>
 
 <body>
 <div id="header">
     <div style="padding: 0; margin: 0">
-        <h1>Google Reviews Scraper</h1>
+        <h1><b>Google Reviews Scraper</b></h1>
         <div align="right" style="margin-right: 20px">
             {% if current_user.is_authenticated %}
             Hi, {{ current_user.id }}
@@ -153,7 +165,8 @@
             <td align="left" style="width: 33%">
                 <table>
                     <tr>
-                        <td><span class="button"><a href="/">Home</a></span></td>
+                        <td><span class="button"><a href="/"><b>Home</b></a></span></td>
+                        <td><span class="button"><a href="/all_reviews"><b>All Reviews</b></a></span></td>
                     </tr>
                 </table>
             </td>
@@ -165,9 +178,9 @@
                 <span class="button">
 
                         {% if current_user.is_authenticated %}
-                            <a href="/account">Account</a>
+                            <a href="/account"><b>Account</b></a>
                         {% else %}
-                            <a href="/register">Register</a>
+                            <a href="/register"><b>Register</b></a>
                         {% endif %}
 
                 </span>
@@ -176,9 +189,9 @@
                 <span class="button">
 
                         {% if current_user.is_authenticated %}
-                            <a href="/logout">Logout</a>
+                            <a href="/logout"><b>Logout</b></a>
                         {% else %}
-                            <a href="/login">LogIn</a>
+                            <a href="/login"><b>LogIn</b></a>
                         {% endif %}
 
                 </span>
