@@ -51,7 +51,7 @@
             {% for review in reviews %}
             <tr>
                 <td width="30px"><input type="checkbox" name="review_ids" value="{{ review.id }}"></td>
-                <td>{{ review.review_id }}</td>
+                <td>{{ review.id }}</td>
                 <td>{{ review.place_name }}</td>
                 <td>{{ review.reviewer }}</td>
                 <td>{{ review.rating }}</td>

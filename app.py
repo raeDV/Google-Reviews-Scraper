@@ -29,7 +29,7 @@ login_manager.login_view = 'login'
 app.config['SQLALCHEMY_DATABASE_URI'] = r'sqlite:///users.sqlite'
 app.config['DEBUG'] = True
 db.init_app(app)
-gmaps = googlemaps.Client(key='AIzaSyDMNj_iWsB2-HoZT_grWBjZyqD4KsmR0aU')
+gmaps = googlemaps.Client(key='YOUR-API-KEY')
 app.secret_key = os.environ.get('SECRET_KEY', 'fallback_secret_key_if_env_var_not_set')
 
 if not os.path.isfile("users.sqlite"):
@@ -219,10 +219,13 @@ def get_all_reviews(place_url, number_reviews):
     # firefox_options.add_argument("--headless")
 
     # Set path to geckodriver as per your configuration, change it to your path accordingly
-    webdriver_service = Service(r'C:\Users\RAE\Downloads\geckodriver-v0.33.0-win64\geckodriver.exe')
+    webdriver_service = Service(r'PATH-TO geckodriver.exe')
 
-    # Choose Firefox Browser
-    driver = webdriver.Firefox(service=webdriver_service, options=firefox_options)
+    # Set the browser's zoom level to 50%
+    profile = webdriver.FirefoxProfile()
+    profile.set_preference("layout.css.devPixelsPerPx", "0.5")
+    driver = webdriver.Firefox(service=webdriver_service, options=firefox_options, firefox_profile=profile)
+
     driver.get(place_url)
 
     # Add a delay for the page to load
@@ -241,7 +244,7 @@ def get_all_reviews(place_url, number_reviews):
     actions = ActionChains(driver)
     actions.move_to_element(reviews_button).perform()
     reviews_button.click()
-    time.sleep(3)
+    time.sleep(2)
 
     # Get overall rating after clicking the Reviews button
     try:
