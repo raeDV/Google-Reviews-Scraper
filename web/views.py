@@ -22,7 +22,7 @@ def get_google_reviews(place):
         'inputtype': 'textquery',
         'fields': 'name,formatted_address,place_id',
         # Replace 'Your_API_Key' with your real google API key for testing
-        'key': 'AIzaSyDMNj_iWsB2-HoZT_grWBjZyqD4KsmR0aU'
+        'key': 'Your_API_Key'
     }
     response = requests.get(url, params=params)
     data = response.json()
@@ -45,7 +45,7 @@ def fetch_reviews(place_id,place):
         'place_id': place_id,
         'fields': 'name,rating,reviews',
         # Replace 'Your_API_Key' with your real google API key for testing
-        'key': 'AIzaSyDMNj_iWsB2-HoZT_grWBjZyqD4KsmR0aU'
+        'key': 'Your_API_Key'
     }
     response = requests.get(url, params=params)
     data = response.json()
