@@ -14,7 +14,8 @@
 ### it. Do not expose your API key publicly, such as in public repositories or clientside code, as it can lead to unauthorized usage and potential security issues.
 ### i. For more detailed instructions and information, you can refer to the official Google Cloud documentation on creating an API key: https://cloud.google.com/docs/authentication/gettingstarted#creating_the_api_key
 ### j. Replace 'Your_API_Key' with your real google API key in app.py.
-## 3. Download Firefox browser and geckodriver that matches your computer.
+
+## 2. Download Firefox browser and geckodriver that matches your computer.
 ### a. Firefox Brower download page: https://www.mozilla.org/en-CA/firefox/new/
 ### b. geckodriver download page: https://github.com/mozilla/geckodriver/releases.
 ### Please choose the one that matches your computer, i.e. if you are using windows 64-bit operating system, you should choose win64.zip.
