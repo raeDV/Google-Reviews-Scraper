@@ -1,9 +1,9 @@
 # Google-Reviews-Scraper
 
-#User Guide
+# User Guide
 
-##1. Create your own google API key if you don’t have one.
-###a. Go to the Google Cloud Console: https://console.cloud.google.com/
+## 1. Create your own google API key if you don’t have one.
+### a. Go to the Google Cloud Console: https://console.cloud.google.com/
 ###b. Sign in with the Google account you want to associate with the API key.
 c. Create a new project or select an existing project from the project dropdown in
 the top navigation bar.
