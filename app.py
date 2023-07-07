@@ -251,14 +251,17 @@ def scrape_all_reviews(driver, number_reviews):
 
 def get_all_reviews(place_url, number_reviews):
     # Setup firefox options
-    firefox_options = Options()
+    firefox_options = webdriver.FirefoxOptions()
     # firefox_options.add_argument("--headless")
+
+    # Set the browser's zoom level to 50%
+    firefox_options.set_preference("layout.css.devPixelsPerPx", "0.5")
 
     # Set path to geckodriver as per your configuration, change it to your path accordingly
     webdriver_service = Service(r'D:\My Files\download\geckodriver.exe')
 
-    # Choose Firefox Browser
     driver = webdriver.Firefox(service=webdriver_service, options=firefox_options)
+
     driver.get(place_url)
 
     # Add a delay for the page to load
