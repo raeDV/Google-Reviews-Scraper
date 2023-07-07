@@ -1,5 +1,6 @@
 import csv
 import os
+import random
 import re
 import time
 from datetime import datetime, timedelta
@@ -11,6 +12,7 @@ from flask import Flask, request, render_template, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
@@ -29,7 +31,7 @@ login_manager.login_view = 'login'
 app.config['SQLALCHEMY_DATABASE_URI'] = r'sqlite:///users.sqlite'
 app.config['DEBUG'] = True
 db.init_app(app)
-gmaps = googlemaps.Client(key='YOUR-API-KEY')
+gmaps = googlemaps.Client(key='AIzaSyDMNj_iWsB2-HoZT_grWBjZyqD4KsmR0aU')
 app.secret_key = os.environ.get('SECRET_KEY', 'fallback_secret_key_if_env_var_not_set')
 
 if not os.path.isfile("users.sqlite"):
@@ -122,33 +124,64 @@ def scrape_all_reviews(driver, number_reviews):
     reviews = []
 
     review_selector = "//div[contains(@class, 'jftiEf fontBodyMedium ')]"
-
     scraped_count = 0
+    last_processed = None
+
+    # Counters to stop the loop in case of no progress
+    no_progress_count = 0
+    max_no_progress_attempts = 20  # Or any other number you find suitable
+
     while scraped_count < number_reviews:
         current_reviews = driver.find_elements(By.XPATH, review_selector)
         if not current_reviews:
             print("No reviews found. Waiting for the reviews to load...")
-            time.sleep(2)
+            time.sleep(random.uniform(0.1, 0.5))
             continue
 
-        # Scroll page to load more reviews
-        driver.execute_script('arguments[0].scrollIntoView(true);', current_reviews[-1])
-        time.sleep(2)
+        # Scroll to the last review
+        driver.execute_script("arguments[0].scrollIntoView();", current_reviews[-1])
+
+        time.sleep(random.uniform(0.1, 0.5))
 
         # Check if there are owner's responses and scroll to the end of them
-        for review in current_reviews:
-            try:
-                owner_response_elem = review.find_element(By.XPATH, ".//span[text()='Response from the owner']"
-                                                                    "/following::div[@class='wiI7pd'][1]")
-                driver.execute_script('arguments[0].scrollIntoView(true);', owner_response_elem)
-                time.sleep(1)
-            except NoSuchElementException:
-                # No owner response, continue to the next review
-                continue
+        try:
+            owner_response_elem = current_reviews[-1].find_element(By.XPATH, ".//span[text()='Response from the owner']"
+                                                                             "/following::div[@class='wiI7pd'][1]")
+            scroll_height_before = driver.execute_script('return document.documentElement.scrollHeight;')
+            driver.execute_script("arguments[0].scrollIntoView();", owner_response_elem)
+
+            time.sleep(random.uniform(0.1, 0.5))
+
+            scroll_height_after = driver.execute_script('return document.documentElement.scrollHeight;')
+
+            if scroll_height_before == scroll_height_after:
+                # If the page did not scroll down after trying to scroll to the owner's response, scroll down a bit more
+                actions = ActionChains(driver)
+                actions.send_keys(Keys.PAGE_DOWN)
+                actions.perform()
+
+                time.sleep(random.uniform(0.1, 0.5))
+        except NoSuchElementException:
+            # No owner response, continue to the next review
+            pass
 
         new_reviews = driver.find_elements(By.XPATH, review_selector)
-        scraped_count = len(new_reviews)
-        print(f"{scraped_count-10}/{number_reviews} reviews scraped, in progress...")
+        new_scraped_count = len(new_reviews)
+
+        # Check if there is any progress
+        if new_scraped_count > scraped_count:
+            # If progress, reset the no progress counter and print the progress
+            no_progress_count = 0
+            scraped_count = new_scraped_count
+            print(f"{scraped_count}/{number_reviews} reviews scraped, in progress...")
+        else:
+            # If no progress, increment the no progress counter
+            no_progress_count += 1
+
+        # If no progress for max_no_progress_attempts attempts, break the loop and save the already scraped reviews
+        if no_progress_count >= max_no_progress_attempts:
+            print(f"Scraping stopped due to no progress. {scraped_count} reviews scraped.")
+            break
 
     print(f"{scraped_count}/{number_reviews} reviews scraped, done.\n")
 
@@ -219,7 +252,7 @@ def get_all_reviews(place_url, number_reviews):
     # firefox_options.add_argument("--headless")
 
     # Set path to geckodriver as per your configuration, change it to your path accordingly
-    webdriver_service = Service(r'PATH-TO geckodriver.exe')
+    webdriver_service = Service(r'C:\Users\RAE\Downloads\geckodriver-v0.33.0-win64\geckodriver.exe')
 
     # Set the browser's zoom level to 50%
     profile = webdriver.FirefoxProfile()
@@ -500,7 +533,7 @@ def sort_reviews():
     order = request.args.get('order')
 
     sort_options = {
-        'id': Reviews.review_id,
+        'id': Reviews.id,
         'place_name': Reviews.place_name,
         'reviewer': Reviews.reviewer,
         'rating': Reviews.rating,
