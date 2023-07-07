@@ -20,7 +20,7 @@ from allReviews.models import Review
 from allReviews import db
 
 views=Blueprint('views',__name__)
-gmaps = googlemaps.Client(key='AIzaSyDMNj_iWsB2-HoZT_grWBjZyqD4KsmR0aU')
+gmaps = googlemaps.Client(key='your api key')
 views.secret_key = os.environ.get('SECRET_KEY', 'fallback_secret_key_if_env_var_not_set')
 
 def relative_to_absolute_date(relative_date_str):
