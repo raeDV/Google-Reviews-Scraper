@@ -8,10 +8,12 @@
 
 <!-- User Input Section -->
 <form method="POST">
-    <input type="text" name="place_name" placeholder="Enter a place name"><br>
-    <input type="number" name="number_reviews" placeholder="Reviews number desired"></br><br>
+    <label for="place_name">Place Name:</label>
+    <input type="text" name="place_name" id="place_name" placeholder="Enter a place name"><br>
+    <label for="number_reviews">Number of Reviews:</label>
+    <input style="width: 100px" type="text" name="number_reviews" id="number_reviews" placeholder="Enter No." ><br><br>
     <button type="submit">Scrape Reviews</button>
-      <p style="color: red;">Note: Please double-check the place URL to confirm it's the right place you want to check.</p>
+    <p style="color: red;">Note: Please double-check the place URL to confirm it's the right place you want to check.</p>
 </form>
 
 <!-- Place and General Information Section -->
@@ -71,16 +73,17 @@
         {% for review in reviews %}
         <tr>
             <td>{{ review.id }}</td>
-            <td>{{ review.reviewer }}</td>
+            <td>{{ review.username }}</td>
             <td>{{ review.rating }}</td>
             <td>{{ review.review_time }}</td>
-            <td width="700px">{{ review.review_content }}</td>
+            <td width="500px">{{ review.review_content }}</td>
             <td>{{ review.owner_response }}</td>
         </tr>
         {% endfor %}
         </tbody>
     </table>
 </div>
+
 
 
 {% elif no_reviews %}

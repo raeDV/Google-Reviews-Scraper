@@ -1,14 +1,37 @@
 {% extends "base.html" %}
-{% block title %}{{ super() }} - All Reviews{% endblock %}
+{% block title %} Home {% endblock %}
 {% block content %}
+
+<center><form  action="{{ url_for('views.sort_reviews')}}" class="sort-form" method="GET">
+    <label for="sort_option">Sort By:</label>
+    <select name="option" id="sort_option">
+        <option value="id">ID</option>
+        <option value="place_name">Place Name</option>
+        <option value="username">Reviewer</option>
+        <option value="rating">Rating</option>
+        <option value="review_time">Review Time</option>
+        <option value="review_content">Review Content</option>
+        <option value="owner_response">Owner Response</option>
+    </select>
+    <label for="sort_order">Order:</label>
+    <select name="order" id="sort_order">
+        <option value="asc">Ascending</option>
+        <option value="desc">Descending</option>
+    </select>
+    <button type="submit">Sort</button>
+</form></center><br>
+
+<form action="{{ url_for('views.delete_reviews') }}" method="POST">
 
 <!-- Review Table -->
 {% if reviews %}
-<h2>All Reviews:</h2>
+<h2>All Reviews</h2>
+<center><button type="submit">Delete Selected Reviews</button></center></br>
 <div class="result">
     <table>
         <thead>
         <tr>
+            <th><input type="checkbox" id="check_all" onclick="toggleAllReviews(this.checked)"></th>
             <th>ID</th>
             <th>Place Name</th>
             <th>Reviewer</th>
@@ -21,12 +44,13 @@
         <tbody>
         {% for review in reviews %}
         <tr>
-            <td>{{ review.id  }}</td>
+            <td width="30px"><input type="checkbox" name="ids" value="{{ review.id }}"></td>
+            <td>{{ review.id }}</td>
             <td>{{ review.place_name }}</td>
             <td>{{ review.username }}</td>
             <td>{{ review.rating }}</td>
             <td>{{ review.review_time }}</td>
-              <td width="500px">{{ review.review_content }}</td>
+            <td>{{ review.review_content }}</td>
             <td>{{ review.owner_response }}</td>
         </tr>
         {% endfor %}
@@ -36,5 +60,5 @@
 {% else %}
 <p>No reviews found.</p>
 {% endif %}
-
+</form>
 {% endblock %}

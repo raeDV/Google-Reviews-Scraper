@@ -5,6 +5,7 @@
     <title>{% block title %}Google Reviews Scraper{% endblock %}</title>
     <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css')}}"/>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
     <script>
         $(document).ready(function () {
             var $header = $('#header');
@@ -15,7 +16,12 @@
                 $main.height(height);
             }).trigger('resize'); //on page load
         });
-
+        function toggleAllReviews(checked) {
+        var checkboxes = document.getElementsByName('review_ids');
+        for (var i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = checked;
+        }
+    }
 
     </script>
 </head>
@@ -26,8 +32,7 @@
         <h1><b>Google Reviews Scraper</b></h1>
         <div align="right" style="margin-right: 20px">
             {% if current_user.is_authenticated %}
-<!--            Hi, {{ current_user.id }}-->
-            Hi, {{ current_user.username}}
+            Hi, {{ current_user.username }}
             {% endif %}
         </div>
     </div>

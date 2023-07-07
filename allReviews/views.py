@@ -358,23 +358,81 @@ def save_reviews_database(place_name, reviews):
         db.session.rollback()
         print(f"Error saving reviews for {place_name}: {str(e)}")
 
+# this method is for showing each place always from 1
+# @views.route('/all_reviews', methods=['GET'])
+# @login_required
+# def all_reviews():
+#     places = set()
+#     latest_reviews = []
+#     review_count = {}
+#     # Get all reviews for the current user, ordered by place name and review time in descending order
+#     reviews = Review.query.filter_by(user_id=current_user.id).order_by(Review.place_name,
+#                                                                    Review.review_time.desc()).all()
+#     for review in reviews:
+#         if review.place_name not in places:
+#             places.add(review.place_name)
+#             review_count[review.place_name] = 1
+#         else:
+#             review_count[review.place_name] += 1
+#         review.id = review_count[review.place_name]
+#         latest_reviews.append(review)
+#
+#     return render_template('all_reviews.html', reviews=latest_reviews)
 
 @views.route('/all_reviews', methods=['GET'])
 @login_required
 def all_reviews():
-    places = set()
-    latest_reviews = []
-    review_count = {}
-    # Get all reviews for the current user, ordered by place name and review time in descending order
-    reviews = Review.query.filter_by(user_id=current_user.id).order_by(Review.place_name,
-                                                                   Review.review_time.desc()).all()
-    for review in reviews:
-        if review.place_name not in places:
-            places.add(review.place_name)
-            review_count[review.place_name] = 1
-        else:
-            review_count[review.place_name] += 1
-        review.id = review_count[review.place_name]
-        latest_reviews.append(review)
+    reviews = Review.query.filter_by(user_id=current_user.id).all()
 
-    return render_template('all_reviews.html', reviews=latest_reviews)
+    return render_template('all_reviews.html', reviews=reviews)
+
+@views.route('/delete_reviews', methods=['POST'])
+@login_required
+def delete_reviews():
+    if 'ids' in request.form:
+        ids = request.form.getlist('ids')
+        if not ids:
+            flash("No reviews selected for deletion.", category="error")
+        else:
+            try:
+                deleted_reviews = Review.query.filter(Review.user_id == current_user.id,
+                                                       Review.id.in_(ids)).delete(synchronize_session=False)
+                db.session.commit()
+                flash(f"Successfully deleted {deleted_reviews} review(s).", category="success")
+                print(f"Successfully deleted {deleted_reviews} review(s).")
+            except Exception as e:
+                db.session.rollback()
+                flash("An error occurred while deleting the reviews.", category="error")
+                print(f"Error while deleting reviews: {e}")
+    else:
+        flash("No reviews selected for deletion.", category="error")
+
+    return redirect(url_for('views.all_reviews'))
+
+
+@views.route('/sort_reviews', methods=['GET'])
+@login_required
+def sort_reviews():
+    option = request.args.get('option')
+    order = request.args.get('order')
+
+    sort_options = {
+        'id': Review.id,
+        'place_name': Review.place_name,
+        'reviewer': Review.username,
+        'rating': Review.rating,
+        'review_time': Review.review_time,
+        'review_content': Review.review_content,
+        'owner_response': Review.owner_response
+    }
+
+    if option in sort_options:
+        column = sort_options[option]
+        if order == 'desc':
+            column = column.desc()
+
+        reviews = Review.query.filter_by(user_id=current_user.id).order_by(column).all()
+    else:
+        reviews = Review.query.filter_by(user_id=current_user.id).all()
+
+    return render_template('all_reviews.html', reviews=reviews)
